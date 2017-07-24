@@ -54,7 +54,7 @@ def sephora_problem_finder(url, config):
         return ProductProblem(STOCKOUT, "product not carried")
     if ('"is_in_stock":false' in page.text):
         return ProductProblem(STOCKOUT, "out of stock")
-    if ('"is_few_left":true' in page.text):
+    if (re.search('seph-json-to-js="sku"[^<]*"is_few_left":true', page.text)):
         return ProductProblem(ALMOST_STOCKOUT, "only a few left")
     # 3. if problems not found, everything is good!
     return None

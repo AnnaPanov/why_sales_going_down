@@ -39,7 +39,7 @@ if __name__ == "__main__":
     # work!
     rows_written = 0
     with open(results_file, "w") as result_stream:
-        results_fields = ['utc_time','local_time','Retailer','Link','Brand','Family','problem_class','problem_text','problem_detail']
+        results_fields = ['utc_time','local_time','Retailer','Link','Brand','Family','problem_class','problem','problem_detail']
         results_writer = None
         for id in listings:
             logging.info("trying: %s" % id)
@@ -47,7 +47,7 @@ if __name__ == "__main__":
             result = dict(product_definition, **{ 'utc_time' : utc_now_str(), 'local_time' : local_now_str()})
             try:
                 problems = pf.find_problems(product_definition)
-                logging.info("^^^ verdict: %s" % (problems.problem_text if problems is not None else "product available"))
+                logging.info("^^^ verdict: %s" % (problems.problem if problems is not None else "product available"))
             except:
                 logging.error("failed to load product availability for '%s': %s" % (id, str(sys.exc_info())))
                 continue
