@@ -131,7 +131,7 @@ def _load_product_page(url, config):
     if (not title) or (0 == len(title.groups())):
         raise ProductProblemException(ProductProblem(PRODUCT_NOT_ON_PAGE, "page has no title"))
     if (0 != len(config)):
-        title = ' '.join(title.groups()[0].splitlines())
+        title = ' '.join(title.groups()[0].splitlines()).strip()
         logging.info("^^ title: %s" % (str(title)))
         expected_title = config[product_config.FIELD_EXPECTED_TITLE]
         brand = config[product_config.FIELD_BRAND]
