@@ -44,9 +44,9 @@ def generate_pivot_page(title, data_rows, rows, cols):
         );
      });
         </script>
-
+        <h3>%s</h3>
         <div id="output" style="margin: 30px;"></div>
 
     </body>
-</html>''' % (rows, cols))
+</html>''' % (rows, cols, title))
     return ''.join(result)

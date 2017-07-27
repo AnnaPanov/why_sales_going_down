@@ -1,6 +1,8 @@
 import problem_finders as pf
 import product_problems as pp
 import product_config as pc
+import pivot_page
+
 import datetime as dt
 import argparse
 import sys
@@ -34,10 +36,12 @@ if __name__ == "__main__":
             sys.exit(1)
     logging.info("product config loaded successfully from '%s' (total of %d listings)" % (args.product_config, len(listings)))
     results_file = "availability_" + utc_now_str().replace(":", "").replace("-", "").replace(" ", "-") + ".csv"
-    logging.info("results will be written into '%s'" % results_file)
+    pivot_file = results_file + ".html"
+    logging.info("results will be written into '%s' and '%s'" % (results_file, pivot_file))
 
     # work!
     rows_written = 0
+    rows_with_problems = []
     with open(results_file, "w") as result_stream:
         results_fields = ['utc_time','local_time','Retailer','Link','Brand','Family','problem_class','problem','problem_detail']
         results_writer = None
@@ -50,12 +54,19 @@ if __name__ == "__main__":
                 logging.info("^^^ verdict: %s" % (problems.problem if problems is not None else "product available"))
             except:
                 logging.error("failed to load product availability for '%s': %s" % (id, str(sys.exc_info())))
-                continue
+                problems = pp.ProductProblem(pp.WEBSCRAPER_ERROR, str(sys.exc_info()))
             if (results_writer is None):
                 results_writer = csv.DictWriter(result_stream, fieldnames=results_fields, extrasaction='ignore', lineterminator='\n')
                 results_writer.writeheader()
-            results_writer.writerow(result if problems is None else dict(result, **problems.__dict__))
+            result = result if problems is None else dict(result, **problems.__dict__)
+            result = { f:result.get(f, '') for f in results_fields } # only leave the fields we need + use space for blanks
+            results_writer.writerow(result)
             rows_written = rows_written + 1
+            if (problems is not None):
+                rows_with_problems.append(result)
             if (rows_written > args.limit):
                 break
-    logging.info("wrote %d data rows into '%s'" % (rows_written, results_file))
+    pivot_table_text = pivot_page.generate_pivot_page("Stockout Action Items @ " + local_now_str(), rows_with_problems, ["problem","Brand","Retailer","Link"], [])
+    with open(pivot_file, "w") as pivot_stream:
+        pivot_stream.write(pivot_table_text)
+    logging.info("wrote %d data rows into '%s' and %d data rows into '%s'" % (rows_written, results_file, len(rows_with_problems), pivot_file))

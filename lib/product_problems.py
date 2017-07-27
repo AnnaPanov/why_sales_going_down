@@ -6,6 +6,7 @@ PROBLEM_WITH_ASSETS = "assets"
 
 # known product problems (and their severity)
 CONFIG_ERROR = ("configuration error", PROBLEM_WITH_CONFIGURATION, 1)
+WEBSCRAPER_ERROR = ("web scraper error", PROBLEM_WITH_CONFIGURATION, 2)
 RETAILER_NOT_SUPPORTED = ("retailer not supported", PROBLEM_WITH_CONFIGURATION, 2)
 PAGE_NOT_LOADED = ("page not loaded", PROBLEM_WITH_CONFIGURATION, 100)
 PRODUCT_NOT_ON_PAGE = ("product not on page", PROBLEM_WITH_CONFIGURATION, 99)

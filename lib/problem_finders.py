@@ -3,6 +3,7 @@ from product_problems import *
 import product_config
 import requests
 import logging
+import json
 import sys
 import pdb
 import re
@@ -29,13 +30,40 @@ def macys_problem_finder(url, config):
     page = _load_product_page(url, config)
     # 2. search for typical problems
     if ("product is currently unavailable" in page.text):
+        logging.info('page says "product is currently unavailable"')
         return ProductProblem(STOCKOUT, "product is currently unavailable")
     if (re.search("availabilityMsg.*order: usually ships within", page.text)):
+        logging.info('page says "availabilityMsg.*order: usually ships within"')
         return ProductProblem(STOCKOUT, "product not immediately available ('backorder: usually ships within blah blah')")
     if ("lmost sold out" in page.text):
+        logging.info('page says "lmost sold out"')
         return ProductProblem(ALMOST_STOCKOUT, "almost sold out")
-    # 3. if problems not found, everything is good!
-    return None
+    # 3. examine the availability information inside of SEO droplet
+    seo_droplet = re.search('<script[^>]*json[^>]*>([^<]+"@type"\s*:\s*"Offer"[^<]+)</', page.text)
+    if not seo_droplet:
+        logging.info('page text does not contain a SEO droplet')
+        return ProductProblem(PRODUCT_NOT_ON_PAGE, 'page text does not contain a SEO droplet, maybe product is not on page anymore?')
+    seo_droplet = seo_droplet.groups()[0].strip().replace('\n',' ')
+    if ("http://schema.org/InStock" in seo_droplet):
+        logging.info('found "http://schema.org/InStock" inside SEO droplet')
+        return None # the product is in stock, end of story
+    seo_droplet = json.loads(seo_droplet)
+    offers = seo_droplet["offers"]
+    if not isinstance(offers, list):
+        offers = [ offers ]
+    for offer in offers:
+        if ('availability' in offer):
+            availability = offer['availability']
+            if ('InStock' in availability) or ('OnlineOnly' in availability) or ('PreOrder' in availability):
+                return None # found this SKU and its availability is good
+            availability = offer.get('availability', 'KeyNotFound')
+            logging.info('availability is "%s"' % availability)
+            if ('InStock' in availability) or ('OnlineOnly' in availability) or ('PreOrder' in availability):
+                logging.info('found "%s"' % availability)
+                return None # availability is good
+            return ProductProblem(STOCKOUT, availability.split('/')[-1])
+    # 4. seo droplet not found on page
+    return ProductProblem(CONFIG_ERROR, "SEO droplet has no availability information for this skuId")
 _problem_finders["macy's"] = macys_problem_finder
 _problem_finders["macys"] = macys_problem_finder
 
@@ -47,17 +75,29 @@ Sephora
 def sephora_problem_finder(url, config):
     # 1. load the product page
     page = _load_product_page(url, config)
-    # 2. search for typical problems
-    if ("productNotCarried" in page.url):
-        return ProductProblem(STOCKOUT, "product not carried")
-    if (re.search("product not carried", page.text, re.IGNORECASE)):
-        return ProductProblem(STOCKOUT, "product not carried")
-    if ('"is_in_stock":false' in page.text):
-        return ProductProblem(STOCKOUT, "out of stock")
-    if (re.search('seph-json-to-js="sku"[^<]*"is_few_left":true', page.text)):
-        return ProductProblem(ALMOST_STOCKOUT, "only a few left")
-    # 3. if problems not found, everything is good!
-    return None
+    # 2. find the SEO droplet for a given SKU ID
+    sku = re.search('skuId=(\d+)', url)
+    if not sku:
+        logging.info('url does not contain "skuId=(\d+)"')
+        return ProductProblem(CONFIG_ERROR, 'link must contain "skuId=", try clicking on a product size to expand the link')
+    sku = sku.groups()[0]
+    seo_droplet = re.search('<script[^>]*json[^>]*>([^<]+"@type"\s*:\s*"Offer"[^<]+)</', page.text)
+    if not seo_droplet:
+        logging.info('page text does not contain a SEO droplet')
+        return ProductProblem(PRODUCT_NOT_ON_PAGE, 'page text does not contain a SEO droplet, maybe product is not on page anymore?')
+    seo_droplet = seo_droplet.groups()[0].strip().replace('\n',' ')
+    seo_droplet = json.loads(seo_droplet)
+    offers = seo_droplet["offers"]
+    for offer in offers:
+        if ('sku' in offer) and (str(offer['sku']) == str(sku)): # this is our offer
+            availability = offer.get('availability', 'KeyNotFound')
+            logging.info('availability for skuId=%s is "%s"' % (sku, availability))
+            if ('InStock' in availability) or ('OnlineOnly' in availability) or ('PreOrder' in availability):
+                logging.info('found "%s" inside SEO droplet for this SKU' % availability)
+                return None # found this SKU and its availability is good
+            return ProductProblem(STOCKOUT, availability.split('/')[-1])
+    # 3. if we are here, we failed to find that specific SKU on the page
+    return ProductProblem(CONFIG_ERROR, "SEO droplet has no availability information for this skuId")
 _problem_finders["sephora"] = sephora_problem_finder
 
 
