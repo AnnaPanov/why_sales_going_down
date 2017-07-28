@@ -5,7 +5,6 @@ import datetime as dt
 import logging
 import glob
 import csv
-import pdb
 
 FIELD_UTC_TIME = 'utc_time'
 FIELD_LOCAL_TIME = 'local_time'

@@ -36,3 +36,4 @@ class ProductProblem:
 class ProductProblemException(Exception):
     def __init__(self, problem):
         self.problem = problem
+

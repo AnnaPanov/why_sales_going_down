@@ -2,6 +2,7 @@ FIELD_LINK = "Link"
 FIELD_EXPECTED_TITLE = "ExpectedTitle"
 FIELD_RETAILER = "Retailer"
 FIELD_BRAND = "Brand"
+FIELD_FAMILY = "Family"
 
 import csv
 import logging
@@ -21,6 +22,8 @@ def load(filename, error_list):
                 error = "field '%s' not specified in %s on line number %d" % (FIELD_EXPECTED_TITLE, filename, line_no)
             elif (FIELD_BRAND not in row):
                 error = "field '%s' not specified in %s on line number %d" % (FIELD_BRAND, filename, line_no)
+            elif (FIELD_FAMILY not in row):
+                error = "field '%s' not specified in %s on line number %d" % (FIELD_FAMILY, filename, line_no)
             elif (FIELD_RETAILER not in row):
                 error = "field '%s' not specified in %s on line number %d" % (FIELD_RETAILER, filename, line_no)
             if (error is not None):

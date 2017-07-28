@@ -27,9 +27,13 @@ class S(BaseHTTPRequestHandler):
         
     def do_POST(self):
         content_length = int(self.headers['Content-Length'])
-        post_data = self.rfile.read(content_length)
+        post_data = self.rfile.read(content_length).decode('utf-8')
+        parsed_query = up.parse_qs(post_data)
+        print(str(parsed_query))
+        redirect_url = parsed_query.get('original_url', ['/'])
+        redirect_url = redirect_url[0] if (isinstance(redirect_url, list) and 0 < len(redirect_url)) else '/'
         self._set_headers()
-        self.wfile.write("<html><body><h1>POST!</h1></body></html>".encode('utf-8'))
+        self.wfile.write(('<head><meta http-equiv="refresh" content="0;url='+ redirect_url + '"></head>').encode('utf-8'))
 
         
 def run(server_class=HTTPServer, handler_class=S, port=80):

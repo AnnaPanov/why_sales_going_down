@@ -7,7 +7,7 @@ def availability_report(latest_availability_by_product, selected_report):
     result = []
     result.append(HTML_HEAD)
     result.append('<body>')
-    result.append('<h1>Why Online Sales Not Growing?</h1>')
+    result.append('<h1>Low-Hanging Fruit &#x1f347;</h1><br><br>')
     selector = report_selector(selected_report)
     result.append(data_table(selector, latest_availability_by_product))
     result.append('</body></html>')
@@ -23,13 +23,15 @@ def report_selector(report):
     if not selected_report:
         selected_report = REPORT_TYPES[0]
     return '''
-<center><div class="btn-group" data-toggle="buttons">
+<center>
+<div class="btn-group" data-toggle="buttons">
 ''' + ''.join(('''
   <label class="btn''' + (" active" if report_type == selected_report else "") + '''">
     <input type="radio" value="''' + report_type.replace(' ', '_') + '''" name="report_type" ''' + ('checked' if report_type == selected_report else '') +\
 '''> <i class="fa fa-circle-o fa-2x"></i><i class="fa fa-dot-circle-o fa-2x"></i> <span>''' + report_type +  '''</span>
   </label>''') for report_type in REPORT_TYPES) + '''
-</div></center>
+</div>
+</center>
 <script>
 function updateQueryStringParameter(uri, key, value) {
   var re = new RegExp("([?&])" + key + "=.*?(&|$)", "i");
@@ -44,7 +46,7 @@ $(document).on("change","input[type=radio]",function(){
 
 _problem_class_to_nickname = {
     'configuration' : 'not setup',
-    'availability' : 'not available',
+    'availability' : 'out of stock',
     'reviews' : 'sad reviews',
     'assets' : 'wrong assets',
 }
@@ -55,46 +57,67 @@ _problem_class_to_button_type = {
     'assets' : 'btn-seconary',
     'reviews' : 'btn-info',
 }
+_retailer_logos = {
+    "macy's" : 'https://vignette1.wikia.nocookie.net/logopedia/images/b/b8/Macy%27s_Vertical_Logo.svg',
+    "macys" : 'https://vignette1.wikia.nocookie.net/logopedia/images/b/b8/Macy%27s_Vertical_Logo.svg',
+    "ulta" : 'https://logosave.com/images/large/common/02/ulta-beauty.png',
+    "sephora" : 'http://www.parquecomercial-lacanada.com/sites/parquecomercial-lacanada.com/files/field/operador-logo/sephora_-_logo.jpg',
+    "bloomingdales" : 'https://static.couponfollow.com/bloomingdales-com/logo.jpg',
+    "nordstrom" : 'https://media.glassdoor.com/sqll/1704/nordstrom-squarelogo-1382998996505.png',
+}
 
-def listing_row(brand, family, problem_class, problem, problem_detail, date_time):
+def listing_row(link, retailer, brand, family, problem_class, problem, problem_detail, date_time):
+    additional_css = ('' if problem_class != '' else ' style="display:none"') # hide competitive stuff in the beginning
     if not problem: problem = ''
     if not problem_detail: problem_detail = ''
     if (not problem_class) or ('' == problem_class): problem_class = 'competitive'
     problem_class_nickname = _problem_class_to_nickname.get(problem_class, problem_class)
+    retailer_logo_url = _retailer_logos.get(retailer.lower(), 'http://www.publicdomainpictures.net/pictures/40000/velka/question-mark.jpg')
+
     result = []
     result.append('''
-									<tr data-status="''' + problem_class + '''">
+									<tr data-status="''' + problem_class + '"' + additional_css + '''>
 										<td>
+											<a href="javascript:;" class="star">
+  <button type="button" class="btn btn-default btn-sm star" id="myBtn">Solved?</button>
+											</a>
+										</td>
+										<td>
+										<!--
 											<div class="ckbox">
 												<input type="checkbox" id="checkbox1">
 												<label for="checkbox1"></label>
 											</div>
-										</td>
-										<td>
-											<a href="javascript:;" class="star">
-												<i class="glyphicon glyphicon-star"></i>
-											</a>
+											-->
 										</td>
 										<td>
 											<div class="media">
 												<a href="#" class="pull-left">
-													<img src="https://s3.amazonaws.com/uifaces/faces/twitter/fffabs/128.jpg" class="media-photo">
+													<img src="''' + retailer_logo_url + '''" class="media-photo" alt="''' + retailer + '''">
 												</a>
 												<div class="media-body">
 													<span class="media-meta pull-right">''' + date_time.strftime('%b %d, %I:%M %p') + '''</span>
-													<h4 class="title">''')
+													<h4 class="title"><a class="title" href="''' + link + '''" target=_blank>''')
     result.append(brand + ' : ' + family)
     result.append('''
-														<span class="pull-right ''' + problem_class + '''">(''' + problem_class_nickname + ''')</span>
+														</a><span class="pull-right ''' + problem_class + '''">(''' + problem_class_nickname + ''')</span>
 													</h4>''')
     result.append('''
-													<p class="summary">''' + problem + ': ' + problem_detail + '''</p>
+													<p class="summary">''')
+    if (problem or problem_detail):
+        result.append(problem + ': ' + problem_detail)
+    else: result.append('&#x2611;')
+    result.append('''</p>
 												</div>
 											</div>
 										</td>
 									</tr>''')
     return '\n'.join(result)
 
+
+def problem_class_count(availability_data, problem_class):
+    if (problem_class == 'competitive'): problem_class = ''
+    return sum(int(row['problem_class'] == problem_class) for row in availability_data.values())
 
 def data_table(report_selector_text, availability_data):
     problem_classes = set(row.get('problem_class','') for row in availability_data.values())\
@@ -115,45 +138,23 @@ def data_table(report_selector_text, availability_data):
 					<div class="panel-body">
 						<div class="pull-right">
 							<div class="btn-group">
-''' + '\n'.join('<button type="button" class="btn ' + _problem_class_to_button_type.get(x, 'btn-link') + ' btn-filter" data-target="' + x + '">' + _problem_class_to_nickname.get(x, x) + '</button>' for x in problem_classes) + '''
+''' + '\n'.join('<button type="button" class="btn ' + _problem_class_to_button_type.get(x, 'btn-link') + ' btn-filter" data-target="' + x + '">' + _problem_class_to_nickname.get(x, x) + ' (' + str(problem_class_count(availability_data, x)) + ')</button>' for x in problem_classes) + '''
 								<button type="button" class="btn btn-default btn-filter" data-target="all">all</button>
 							</div>
 						</div>
 						<div class="table-container">
 							<table class="table table-filter">
 								<tbody>
-									<tr data-status="competitive">
-										<td>
-											<div class="ckbox">
-												<input type="checkbox" id="checkbox1">
-												<label for="checkbox1"></label>
-											</div>
-										</td>
-										<td>
-											<a href="javascript:;" class="star">
-												<i class="glyphicon glyphicon-star"></i>
-											</a>
-										</td>
-										<td>
-											<div class="media">
-												<a href="#" class="pull-left">
-													<img src="https://s3.amazonaws.com/uifaces/faces/twitter/fffabs/128.jpg" class="media-photo">
-												</a>
-												<div class="media-body">
-													<span class="media-meta pull-right">Febrero 13, 2016</span>
-													<h4 class="title">
-														Lorem Impsum
-														<span class="pull-right competitive">(competitive)</span>
-													</h4>
-													<p class="summary">Ut enim ad minim veniam, quis nostrud exercitation...</p>
-												</div>
-											</div>
-										</td>
-									</tr>
 ''')
-
     for row in availability_data.values():
-        result.append(listing_row(row[pc.FIELD_BRAND], row[pc.FIELD_FAMILY], row.get('problem_class', ''), row.get('problem', ''), row.get('problem_detail', ''), row['local_time']))
+        result.append(listing_row(row[pc.FIELD_LINK],\
+                                  row[pc.FIELD_RETAILER],\
+                                  row[pc.FIELD_BRAND],\
+                                  row[pc.FIELD_FAMILY],\
+                                  row.get('problem_class', ''),\
+                                  row.get('problem', ''),\
+                                  row.get('problem_detail', ''),\
+                                  row['local_time']))
     
     result.append('''								</tbody>
 							</table>
@@ -164,11 +165,58 @@ def data_table(report_selector_text, availability_data):
 		</section>		
 	</div>
 </div>
+
+  <!-- Modal -->
+  <div class="modal fade" id="myModal" role="dialog">
+    <div class="modal-dialog">
+    
+      <!-- Modal content-->
+      <div class="modal-content">
+        <div class="modal-header" style="padding:35px 50px;">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h3><span class="glyphicon glyphicon-check"></span> Mark as Solved</h3>
+        </div>
+        <div class="modal-body" style="padding:40px 50px;">
+          <form role="form" name="resolvedForm" method="post" onsubmit="return validateForm()">
+            <div class="form-group">
+              <label for="name"><span class="glyphicon glyphicon-sunglasses"></span> Who resolved the issue</label>
+              <input type="text" class="form-control" id="name" placeholder="Enter your name">
+            </div><br>
+            <div class="form-group">
+              <label for="solution"><span class="glyphicon glyphicon-flag"></span> Solution</label><br>
+              <label><input type="checkbox" name="solution_2_days" value="" checked> followed up, will be resolved in 2 days</label>
+              <label><input type="checkbox" name="solution_7_days" value=""> followed up, will be resolved in 7 days</label>
+              <label><input type="checkbox" name="solution_14_days" value=""> followed up, will be resolved in 14 days</label>
+            </div><br>
+            <div class="form-group">
+              <label for="comments"><span class="glyphicon glyphicon-comment"></span> Additional comments</label>
+              <textarea rows="5" cols="60" id="comments" placeholder="Anything unusual?"></textarea>
+            </div>
+            <input type="hidden" name="original_url">
+            <button type="submit" class="btn btn-success btn-block"><span class="glyphicon glyphicon-flag"></span> Mark as Solved</button>
+          </form>
+        </div>
+      </div>
+      
+    </div>
+  </div>  
+
 <script>
+function validateForm() {
+    var f = document.forms["resolvedForm"];
+    var x = f["name"].value;
+    if (x == "") {
+        alert("'Who resolved the issue' must be filled out");
+        return false;
+    }
+    f["original_url"].value = window.location.href;
+    return true;
+}
 $(document).ready(function () {
 
-	$('.star').on('click', function () {
+    $('.star').on('click', function () {
       $(this).toggleClass('star-checked');
+      $("#myModal").modal();      
     });
 
     $('.ckbox label').on('click', function () {
@@ -377,19 +425,22 @@ h1 {
 .table-filter .star {
 	color: #ccc;
 	text-align: center;
+	font-weight: bold;
 	display: block;
 }
 .table-filter .star.star-checked {
 	color: #F0AD4E;
 }
 .table-filter .star:hover {
-	color: #ccc;
+	color: #2BBCDE;
+	text-decoration: none;
 }
 .table-filter .star.star-checked:hover {
 	color: #F0AD4E;
 }
 .table-filter .media-photo {
 	width: 35px;
+	border:1px solid silver;
 }
 .table-filter .media-body {
     /* display: block; */
@@ -421,8 +472,15 @@ h1 {
 }
 .table-filter .media .summary {
 	font-size: 14px;
+	color: gray;
 }
 
+.modal-header, h3, .close {
+    background-color: #5cb85c;
+    color:white !important;
+    text-align: center;
+    font-size: 30px;
+}
 
 
   </style>

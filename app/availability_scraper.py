@@ -1,6 +1,7 @@
 import problem_finders as pf
 import product_problems as pp
 import product_config as pc
+import product_availability as pa
 import pivot_page
 
 import datetime as dt
@@ -9,19 +10,18 @@ import sys
 import csv
 import pdb
 
-
 import logging
-logging.basicConfig(format='%(asctime)s: %(levelname)s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
-logging.getLogger().setLevel(logging.INFO)
-
 
 def local_now_str():
-    return dt.datetime.strftime(dt.datetime.now(), "%Y-%m-%d %H:%M:%S")
+    return dt.datetime.strftime(dt.datetime.now(), pa.TIME_FORMAT)
 def utc_now_str():
-    return dt.datetime.strftime(dt.datetime.utcnow(), "%Y-%m-%d %H:%M:%S")
+    return dt.datetime.strftime(dt.datetime.utcnow(), pa.TIME_FORMAT)
 
 
 if __name__ == "__main__":
+    logging.basicConfig(format='%(asctime)s: %(levelname)s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+    logging.getLogger().setLevel(logging.INFO)
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--product_config", type=str, required=True, help="the csv config file with product listings")
     parser.add_argument("--limit", type=int, required=False, default=999999, help="maximum number of rows to output")
@@ -43,7 +43,7 @@ if __name__ == "__main__":
     rows_written = 0
     rows_with_problems = []
     with open(results_file, "w") as result_stream:
-        results_fields = ['utc_time','local_time','Retailer','Link','Brand','Family','problem_class','problem','problem_detail']
+        results_fields = pa.AVAILABILITY_FIELDS
         results_writer = None
         for id in listings:
             logging.info("trying: %s" % id)
