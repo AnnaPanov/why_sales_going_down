@@ -1,15 +1,17 @@
 import product_availability as pa
 import product_config as pc
+import datetime as dt
 
 REPORT_TYPES = [ "remaining issues", "work in progress" ]
 
-def availability_report(latest_availability_by_product, selected_report, username):
+def availability_report(listing_appearance, listing_status, selected_report, username):
     result = []
     result.append(_html_head)
     result.append('<body>')
     #result.append('<h3>Low-Hanging Fruit &#x1f347;</h3><br><br>')
     #selector = report_selector(selected_report)
-    result.append(data_table(latest_availability_by_product, "", username))
+    modified_appearance = listing_status.modify_appearance(listing_appearance, dt.datetime.utcnow())
+    result.append(data_table(modified_appearance.values, "", username))
     if (username is None):
         result.append(_enter_username_popup)
     result.append('</body></html>')
@@ -49,16 +51,16 @@ $(document).on("change","input[type=radio]",function(){
 _problem_class_to_nickname = {
     'competitive' : 'good',
     'configuration' : 'not setup',
-    'availability' : 'out of stock',
+    'availability' : 'not in stock',
     'reviews' : 'sad reviews',
-    'assets' : 'wrong assets',
+    #'assets' : 'wrong assets',
 }
 _problem_class_to_button_type = {
     'competitive' : 'btn-success',
     'availability' : 'btn-danger',
     'configuration' : 'btn-warning',
-    'assets' : 'btn-seconary',
     'reviews' : 'btn-info',
+    #'assets' : 'btn-seconary',
 }
 _retailer_logos = {
     "macy's" : 'https://vignette1.wikia.nocookie.net/logopedia/images/b/b8/Macy%27s_Vertical_Logo.svg',
@@ -113,18 +115,18 @@ def listing_row(link, retailer, brand, family, problem_class, problem, problem_d
 											-->
 										</td>
 										<td>
-<button title='remove from the list' class="btn btn-default btn-xs" data-title="Delete" data-toggle="modal" data-target="#delete">&#x1F5D9;</button>
+<button title='remove from the list' class="btn btn-default btn-xs" data-title="Delete" data-toggle="modal" data-target="#delete" onclick='setDeleteId("''' + link + '''");'>&#x1F5D9;</button>
 										</td>										
 									</tr>''')
     return '\n'.join(result)
 
 
-def problem_class_count(availability_data, problem_class):
+def problem_class_count(appearance_data, problem_class):
     if (problem_class == 'competitive'): problem_class = ''
-    return sum(int(row['problem_class'] == problem_class) for row in availability_data.values())
+    return sum(int(row['problem_class'] == problem_class) for row in appearance_data.values())
 
-def data_table(availability_data, report_selector_text, username):
-    problem_classes = set(row.get('problem_class','') for row in availability_data.values())\
+def data_table(appearance_data, report_selector_text, username):
+    problem_classes = set(row.get('problem_class','') for row in appearance_data.values())\
                       | set(_problem_class_to_button_type.keys()) \
                       | set(_problem_class_to_nickname.keys())
     problem_classes.discard('')
@@ -145,15 +147,16 @@ def data_table(availability_data, report_selector_text, username):
 					<div class="panel-body">
 						<div class="pull-right">
 							<div class="btn-group">
-''' + '\n'.join('<button type="button" class="btn ' + _problem_class_to_button_type.get(x, 'btn-link') + ' btn-filter btn-sm" data-target="' + x + '">' + _problem_class_to_nickname.get(x, x) + ' (' + str(problem_class_count(availability_data, x)) + ')</button>' for x in problem_classes) + '''
-								<button type="button" class="btn btn-default btn-filter btn-sm" data-target="all">all</button>''' + logout_button + '''
+''' + '\n'.join('<button type="button" class="btn ' + _problem_class_to_button_type.get(x, 'btn-link') + ' btn-filter btn-sm" data-target="' + x + '">' + _problem_class_to_nickname.get(x, x) + ' (' + str(problem_class_count(appearance_data, x)) + ')</button>' for x in problem_classes) + '''
+								<button type="button" class="btn btn-default btn-filter btn-sm" data-target="all">all</button>
+								''' + logout_button + '''
 							</div>
 						</div>
 						<div class="table-container">
 							<table class="table table-filter">
 								<tbody>
 ''')
-    for row in availability_data.values():
+    for row in appearance_data.values():
         result.append(listing_row(row[pc.FIELD_LINK],\
                                   row[pc.FIELD_RETAILER],\
                                   row[pc.FIELD_BRAND],\
@@ -208,8 +211,26 @@ $(document).ready(function () {
 function logout() {
     var x = document.forms["logoutForm"];
     if (x) {
-        x["follow"] = window.location.href    
+        x["follow"].value = window.location.href
         x.submit();
+    }
+}
+function setDeleteId(id) {
+    var x = document.forms["deleteForm"];
+    if (x) {
+        x["deleteId"].value = id;
+    } else {
+        alert("deleteForm not found");
+    }
+}
+function doDelete(forHowLong) {
+    var x = document.forms["deleteForm"];
+    if (x) {
+        x["deleteForHowLong"].value = forHowLong
+        x["follow"].value = window.location.href
+        x.submit();
+    } else {
+        alert("deleteForm not found");
     }
 }
 </script>
@@ -230,15 +251,22 @@ function logout() {
        
       </div>
       <div class="modal-footer " style="width:630px">
-        <button type="button" class="btn btn-primary" ><span class="glyphicon glyphicon-ok-sign"></span> Yes (issue already addressed)</button>
-        <button type="button" class="btn btn-info" ><span class="glyphicon glyphicon-ok-sign"></span> Yes Forever (SKU no longer needed)</button>
+        <button type="button" class="btn btn-primary" onclick="doDelete('for 7 days');"><span class="glyphicon glyphicon-ok-sign"></span> Yes (issue already addressed)</button>
+        <button type="button" class="btn btn-info" onclick="doDelete('forever');"><span class="glyphicon glyphicon-ok-sign"></span> Yes Forever (SKU no longer needed)</button>
         <button type="button" class="btn btn-default" data-dismiss="modal"><span class="glyphicon glyphicon-remove"></span> No</button>
       </div>
-        </div>
+    </div>
     <!-- /.modal-content --> 
   </div>
       <!-- /.modal-dialog --> 
     </div>
+
+<!-- the "delete" form -->
+<form method="post" id="deleteForm">
+<input type="hidden" id="deleteForHowLong" name="deleteForHowLong">
+<input type="hidden" id="deleteId" name="deleteId">
+<input type="hidden" id="follow" name="follow">
+</form>
 
  ''')
     if username:
@@ -531,7 +559,7 @@ function validateIntroduction() {
 	document.forms["introduction"]["username"].focus();
         return false;
     }
-    document.forms["introduction"]["follow"] = window.location.href
+    document.forms["introduction"]["follow"].value = window.location.href;
     return true;
 }
 $(document).ready(function(){

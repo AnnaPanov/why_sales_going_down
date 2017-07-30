@@ -6,8 +6,10 @@ import pivot_page
 
 import datetime as dt
 import argparse
-import sys
 import csv
+import sys
+import os
+
 import pdb
 
 import logging
@@ -16,7 +18,8 @@ def local_now_str():
     return dt.datetime.strftime(dt.datetime.now(), pa.TIME_FORMAT)
 def utc_now_str():
     return dt.datetime.strftime(dt.datetime.utcnow(), pa.TIME_FORMAT)
-
+def unfinished_name(filename):
+    return filename + ".unfinished"
 
 if __name__ == "__main__":
     logging.basicConfig(format='%(asctime)s: %(levelname)s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
@@ -42,7 +45,7 @@ if __name__ == "__main__":
     # work!
     rows_written = 0
     rows_with_problems = []
-    with open(results_file, "w") as result_stream:
+    with open(unfinished_name(results_file), "w") as result_stream:
         results_fields = pa.AVAILABILITY_FIELDS
         results_writer = None
         for id in listings:
@@ -69,4 +72,5 @@ if __name__ == "__main__":
     pivot_table_text = pivot_page.generate_pivot_page("Stockout Action Items @ " + local_now_str(), rows_with_problems, ["problem","Brand","Retailer","Link"], [])
     with open(pivot_file, "w") as pivot_stream:
         pivot_stream.write(pivot_table_text)
+    os.rename(unfinished_name(results_file), results_file)
     logging.info("wrote %d data rows into '%s' and %d data rows into '%s'" % (rows_written, results_file, len(rows_with_problems), pivot_file))
