@@ -82,7 +82,7 @@ def listing_row(link, retailer, brand, family, problem_class, problem, problem_d
 									<tr data-status="''' + problem_class + '"' + additional_css + '''>
 										<td>
 											<div class="media">
-												<a href="#" class="pull-left">
+												<a href="''' + link + '''" target=_blank class="pull-left">
 													<img src="''' + retailer_logo_url + '''" class="media-photo" alt="''' + retailer + '''">
 												</a>
 												<div class="media-body">
@@ -90,7 +90,7 @@ def listing_row(link, retailer, brand, family, problem_class, problem, problem_d
 													<h4 class="title"><a class="title" href="''' + link + '''" target=_blank>''')
     result.append(brand + ' : ' + family)
     result.append('''
-														</a><span class="pull-right ''' + problem_class + '''">(''' + problem_class_nickname + ''')</span>
+														</a><a href="''' + link + '''" target=_blank><span class="pull-right ''' + problem_class + '''">(''' + problem_class_nickname + ''')</span></a>
 													</h4>''')
     result.append('''
 													<p class="summary">''')
@@ -102,6 +102,9 @@ def listing_row(link, retailer, brand, family, problem_class, problem, problem_d
 											</div>
 										</td>
 										<td>
+										<!--
+                                                                                        <a class="star" href="#">&#127822;</a>
+										-->
 										<!--
 											<div class="ckbox">
 												<input type="checkbox" id="checkbox1">
@@ -246,7 +249,7 @@ _html_head = '''
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>Low-Hanging Fruit</title>
+  <title>Low-Hanging Fruits</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
@@ -505,7 +508,7 @@ _enter_username_popup = '''
 <!--
           <button type="button" class="close" data-dismiss="modal">&times;</button>
 -->
-          <h4 class="modal-header"><span class="glyphicon glyphicon-comment"></span> Hi! Looks like you are here for the first time<br></h4>
+          <h4 class="modal-header" style="font-size: 18pt"><span class="glyphicon glyphicon-comment"></span> Hi! Welcome to "Low-Hanging Fruits"<br></h4>
         </div>
         <div class="modal-body" style="padding:40px 50px;">
           <form name="introduction" role="form" method="post" onsubmit="return validateIntroduction()">
