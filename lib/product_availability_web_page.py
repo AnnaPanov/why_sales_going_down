@@ -3,13 +3,15 @@ import product_config as pc
 
 REPORT_TYPES = [ "remaining issues", "work in progress" ]
 
-def availability_report(latest_availability_by_product, selected_report):
+def availability_report(latest_availability_by_product, selected_report, username):
     result = []
-    result.append(HTML_HEAD)
+    result.append(_html_head)
     result.append('<body>')
-    result.append('<h1>Low-Hanging Fruit &#x1f347;</h1><br><br>')
-    selector = report_selector(selected_report)
-    result.append(data_table(selector, latest_availability_by_product))
+    #result.append('<h3>Low-Hanging Fruit &#x1f347;</h3><br><br>')
+    #selector = report_selector(selected_report)
+    result.append(data_table(latest_availability_by_product, "", username))
+    if (username is None):
+        result.append(_enter_username_popup)
     result.append('</body></html>')
     return ''.join(result)
 
@@ -119,13 +121,16 @@ def problem_class_count(availability_data, problem_class):
     if (problem_class == 'competitive'): problem_class = ''
     return sum(int(row['problem_class'] == problem_class) for row in availability_data.values())
 
-def data_table(report_selector_text, availability_data):
+def data_table(availability_data, report_selector_text, username):
     problem_classes = set(row.get('problem_class','') for row in availability_data.values())\
                       | set(_problem_class_to_button_type.keys()) \
                       | set(_problem_class_to_nickname.keys())
     problem_classes.discard('')
     problem_tuples = sorted([(_problem_class_to_nickname.get(x,x), x) for x in sorted(list(problem_classes))])
     problem_classes = [x[1] for x in problem_tuples]
+    logout_button = ""
+    if username:
+        logout_button = '<button type="button" class="btn btn-default btn-sm" onclick="logout()" title="not ''' + username + ' anymore?" onlcick="logout"><span class="glyphicon glyphicon-log-out"></span> logout (' + username + ')</button>'
     result = []
     result.append('''
 <!-- https://bootsnipp.com/snippets/featured/easy-table-filter -->
@@ -138,8 +143,8 @@ def data_table(report_selector_text, availability_data):
 					<div class="panel-body">
 						<div class="pull-right">
 							<div class="btn-group">
-''' + '\n'.join('<button type="button" class="btn ' + _problem_class_to_button_type.get(x, 'btn-link') + ' btn-filter" data-target="' + x + '">' + _problem_class_to_nickname.get(x, x) + ' (' + str(problem_class_count(availability_data, x)) + ')</button>' for x in problem_classes) + '''
-								<button type="button" class="btn btn-default btn-filter" data-target="all">all</button>
+''' + '\n'.join('<button type="button" class="btn ' + _problem_class_to_button_type.get(x, 'btn-link') + ' btn-filter btn-sm" data-target="' + x + '">' + _problem_class_to_nickname.get(x, x) + ' (' + str(problem_class_count(availability_data, x)) + ')</button>' for x in problem_classes) + '''
+								<button type="button" class="btn btn-default btn-filter btn-sm" data-target="all">all</button>''' + logout_button + '''
 							</div>
 						</div>
 						<div class="table-container">
@@ -165,42 +170,6 @@ def data_table(report_selector_text, availability_data):
 		</section>		
 	</div>
 </div>
-
-  <!-- Modal -->
-  <div class="modal fade" id="myModal" role="dialog">
-    <div class="modal-dialog">
-    
-      <!-- Modal content-->
-      <div class="modal-content">
-        <div class="modal-header" style="padding:35px 50px;">
-          <button type="button" class="close" data-dismiss="modal">&times;</button>
-          <h3><span class="glyphicon glyphicon-check"></span> Mark as Solved</h3>
-        </div>
-        <div class="modal-body" style="padding:40px 50px;">
-          <form role="form" name="resolvedForm" method="post" onsubmit="return validateForm()">
-            <div class="form-group">
-              <label for="name"><span class="glyphicon glyphicon-sunglasses"></span> Who resolved the issue</label>
-              <input type="text" class="form-control" id="name" placeholder="Enter your name">
-            </div><br>
-            <div class="form-group">
-              <label for="solution"><span class="glyphicon glyphicon-flag"></span> Solution</label><br>
-              <label><input type="checkbox" name="solution_2_days" value="" checked> followed up, will be resolved in 2 days</label>
-              <label><input type="checkbox" name="solution_7_days" value=""> followed up, will be resolved in 7 days</label>
-              <label><input type="checkbox" name="solution_14_days" value=""> followed up, will be resolved in 14 days</label>
-            </div><br>
-            <div class="form-group">
-              <label for="comments"><span class="glyphicon glyphicon-comment"></span> Additional comments</label>
-              <textarea rows="5" cols="60" id="comments" placeholder="Anything unusual?"></textarea>
-            </div>
-            <input type="hidden" name="original_url">
-            <button type="submit" class="btn btn-success btn-block"><span class="glyphicon glyphicon-flag"></span> Mark as Solved</button>
-          </form>
-        </div>
-      </div>
-      
-    </div>
-  </div>  
-
 <script>
 function validateForm() {
     var f = document.forms["resolvedForm"];
@@ -216,7 +185,7 @@ $(document).ready(function () {
 
     $('.star').on('click', function () {
       $(this).toggleClass('star-checked');
-      $("#myModal").modal();      
+      $("#myModal").modal();
     });
 
     $('.ckbox label').on('click', function () {
@@ -233,16 +202,25 @@ $(document).ready(function () {
       }
     });
 
- });
+});
+function logout() {
+    var x = document.forms["logoutForm"];
+    if (x) {
+        x["follow"] = window.location.href    
+        x.submit();
+    }
+}
 </script>
  ''')
+    if username:
+        result.append('''<form method="post" id="logoutForm"><input type="hidden" id="follow" name="follow"><input type="hidden" name="logout" value="''' + username + '''"></form>''')    
     return '\n'.join(result)
 
-HTML_HEAD = '''
+_html_head = '''
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>Avaiability</title>
+  <title>Low-Hanging Fruit</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
@@ -475,15 +453,65 @@ h1 {
 	color: gray;
 }
 
-.modal-header, h3, .close {
-    background-color: #5cb85c;
-    color:white !important;
-    text-align: center;
-    font-size: 30px;
+.modal-header, .close {
+      background-color: #6699ff;
+      color:white !important;
+      text-align: center;
+      font-size: 30px;
 }
-
+.modal-footer {
+      background-color: #f9f9f9;
+}
 
   </style>
 <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css" rel="stylesheet">
 </head>
+'''
+
+_enter_username_popup = '''
+  <!-- Modal -->
+  <div class="modal fade" id="enterUserName" role="dialog">
+    <div class="modal-dialog">
+    
+      <!-- Modal content-->
+      <div class="modal-content">
+        <div class="modal-header" style="padding:35px 50px;">
+<!--
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+-->
+          <h4 class="modal-header"><span class="glyphicon glyphicon-comment"></span> Hi! Looks like you are here for the first time<br></h4>
+        </div>
+        <div class="modal-body" style="padding:40px 50px;">
+          <form name="introduction" role="form" method="post" onsubmit="return validateIntroduction()">
+            <div class="form-group" style="align:left">
+              <label for="username"> What Is Your Name?</label>
+              <table><tr><td width='95%'>
+              <input type="text" class="form-control pull-left" id="username" name="username" placeholder="enter anything you want, no password required">
+              <input type="hidden" id="follow" name="follow">
+              </td><td>
+              <button type="submit" class="btn btn-primary pull-right" style="align:right"><span class="glyphicon glyphicon glyphicon-send"></span></button>
+              <input type="submit" style="display:none">
+              </td></tr></table>
+            </div>
+          </form>
+<script>
+function validateIntroduction() {
+    var x = document.forms["introduction"]["username"].value;
+    if (x == "") {
+        alert("You can write anything you want. It doesn't have to be your real name");
+	document.forms["introduction"]["username"].focus();
+        return false;
+    }
+    document.forms["introduction"]["follow"] = window.location.href
+    return true;
+}
+$(document).ready(function(){
+    $("#enterUserName").modal();
+});
+</script>
+        </div>
+      </div>
+      
+    </div>
+  </div> 
 '''
