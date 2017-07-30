@@ -47,6 +47,7 @@ $(document).on("change","input[type=radio]",function(){
 '''
 
 _problem_class_to_nickname = {
+    'competitive' : 'good',
     'configuration' : 'not setup',
     'availability' : 'out of stock',
     'reviews' : 'sad reviews',
@@ -80,19 +81,6 @@ def listing_row(link, retailer, brand, family, problem_class, problem, problem_d
     result.append('''
 									<tr data-status="''' + problem_class + '"' + additional_css + '''>
 										<td>
-											<a href="javascript:;" class="star">
-  <button type="button" class="btn btn-default btn-sm star" id="myBtn">Solved?</button>
-											</a>
-										</td>
-										<td>
-										<!--
-											<div class="ckbox">
-												<input type="checkbox" id="checkbox1">
-												<label for="checkbox1"></label>
-											</div>
-											-->
-										</td>
-										<td>
 											<div class="media">
 												<a href="#" class="pull-left">
 													<img src="''' + retailer_logo_url + '''" class="media-photo" alt="''' + retailer + '''">
@@ -113,6 +101,17 @@ def listing_row(link, retailer, brand, family, problem_class, problem, problem_d
 												</div>
 											</div>
 										</td>
+										<td>
+										<!--
+											<div class="ckbox">
+												<input type="checkbox" id="checkbox1">
+												<label for="checkbox1"></label>
+											</div>
+											-->
+										</td>
+										<td>
+<button title='remove from the list' class="btn btn-default btn-xs" data-title="Delete" data-toggle="modal" data-target="#delete">&#x1F5D9;</button>
+										</td>										
 									</tr>''')
     return '\n'.join(result)
 
@@ -211,6 +210,33 @@ function logout() {
     }
 }
 </script>
+
+<!-- the delete popup -->
+    <div class="modal fade" id="delete" tabindex="-1" role="dialog" aria-labelledby="edit" aria-hidden="true">
+      <div class="modal-dialog">
+    <div class="modal-content" style="width:632px">
+          <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>
+        <h4 class="modal-title custom_align" id="Heading">Removing an SKU</h4>
+      </div>
+          <div class="modal-body">
+       
+       <div class="alert alert-danger"><span class="glyphicon glyphicon-warning-sign"></span>
+       Are you sure?
+       </div>
+       
+      </div>
+      <div class="modal-footer " style="width:630px">
+        <button type="button" class="btn btn-primary" ><span class="glyphicon glyphicon-ok-sign"></span> Yes (issue already addressed)</button>
+        <button type="button" class="btn btn-info" ><span class="glyphicon glyphicon-ok-sign"></span> Yes Forever (SKU no longer needed)</button>
+        <button type="button" class="btn btn-default" data-dismiss="modal"><span class="glyphicon glyphicon-remove"></span> No</button>
+      </div>
+        </div>
+    <!-- /.modal-content --> 
+  </div>
+      <!-- /.modal-dialog --> 
+    </div>
+
  ''')
     if username:
         result.append('''<form method="post" id="logoutForm"><input type="hidden" id="follow" name="follow"><input type="hidden" name="logout" value="''' + username + '''"></form>''')    
@@ -357,10 +383,10 @@ h1 {
 .table-filter tbody tr.selected td {
 	background-color: #eee;
 }
-.table-filter tr td:first-child {
-	width: 38px;
-}
 .table-filter tr td:nth-child(2) {
+	width: 35px;
+}
+.table-filter tr td:nth-child(3) {
 	width: 35px;
 }
 .ckbox {
@@ -513,5 +539,5 @@ $(document).ready(function(){
       </div>
       
     </div>
-  </div> 
+  </div>  
 '''
