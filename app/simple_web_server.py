@@ -1,6 +1,7 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
-import urllib.parse as up
 from http import cookies
+import urllib.parse as up
+import datetime as dt
 import traceback
 import logging
 import pdb
@@ -9,14 +10,12 @@ import product_availability_web_page as pa_page
 import product_availability as pa
 
 
-listing_appearance = pa.ListingAppearance()
-listing_appearance.load_latest()
-
-listing_status = pa.ListingStatus()
-listing_status.load_latest()
-
-
 class S(BaseHTTPRequestHandler):
+    # global variables
+    last_time_listings_loaded = dt.datetime.min # never
+    listing_appearance = pa.ListingAppearance()
+    listing_status = pa.ListingStatus()    
+    
     def _set_headers(self):
         self.send_response(200)
         self.send_header('Content-type', 'text/html')
@@ -33,10 +32,16 @@ class S(BaseHTTPRequestHandler):
     def do_GET(self):
         self._set_headers()
         try:
+            now = dt.datetime.now()
+            if (now > S.last_time_listings_loaded + dt.timedelta(minutes=1)):
+                print("Re-loading the listing appearances (last time loaded was %s)" % (S.last_time_listings_loaded.strftime("%H:%M:%S")))
+                S.last_time_listings_loaded = now
+                S.listing_appearance.load_latest()
+                S.listing_status.load_latest()
             parsed_path = up.urlparse(self.path)
             parsed_query = up.parse_qs(parsed_path.query)
             report_type = parsed_query.get('report_type',[''])[0]
-            result = pa_page.availability_report(listing_appearance, listing_status, report_type, self.username())
+            result = pa_page.availability_report(S.listing_appearance, S.listing_status, report_type, self.username())
             self.wfile.write(''.join(result).encode('utf-8'))
         except ConnectionAbortedError as e:
             pass # this happens with web browsers, and it's not a problem
@@ -61,8 +66,14 @@ class S(BaseHTTPRequestHandler):
                 new_cookie = cookies.SimpleCookie()
                 new_cookie["username"] = "" if ('logout' in parsed_query) else (parsed_query["username"][0])
                 new_cookie_headers = [tuple(kvp.split(':')) for kvp in new_cookie.output().split("\r\n")]
+                if ('username' in parsed_query):
+                    print("%s signed in" % str(parsed_query["username"][0]))
+                if ('logout' in parsed_query):
+                    print("%s signed out" % str(self.username()))
             if ('deleteId' in parsed_query) and ('deleteForHowLong' in parsed_query):
-                listing_status.change_status(parsed_query['deleteId'][0], "deleted", parsed_query['deleteForHowLong'][0], self.username())
+                S.listing_status.change_status(parsed_query['deleteId'][0], "deleted", parsed_query['deleteForHowLong'][0], self.username())
+            if ('reopenId' in parsed_query):
+                S.listing_status.change_status(parsed_query['reopenId'][0], "re-opened", "forever", self.username())
         except ConnectionAbortedError as e:
             pass # this happens with web browsers, and it's not a problem
         except:

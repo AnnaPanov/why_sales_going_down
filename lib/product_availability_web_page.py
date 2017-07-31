@@ -50,10 +50,11 @@ $(document).on("change","input[type=radio]",function(){
 
 _problem_class_to_nickname = {
     'competitive' : 'good',
-    'configuration' : 'not setup',
+    'configuration' : 'not set',
     'availability' : 'not in stock',
     'reviews' : 'sad reviews',
     #'assets' : 'wrong assets',
+    'deleted' : '<span class="glyphicon glyphicon-trash" title="deleted"></span>',
 }
 _problem_class_to_button_type = {
     'competitive' : 'btn-success',
@@ -61,6 +62,7 @@ _problem_class_to_button_type = {
     'configuration' : 'btn-warning',
     'reviews' : 'btn-info',
     #'assets' : 'btn-seconary',
+    'deleted' : 'btn-default',
 }
 _retailer_logos = {
     "macy's" : 'https://vignette1.wikia.nocookie.net/logopedia/images/b/b8/Macy%27s_Vertical_Logo.svg',
@@ -71,17 +73,18 @@ _retailer_logos = {
     "nordstrom" : 'https://media.glassdoor.com/sqll/1704/nordstrom-squarelogo-1382998996505.png',
 }
 
-def listing_row(link, retailer, brand, family, problem_class, problem, problem_detail, date_time):
-    additional_css = ('' if problem_class != '' else ' style="display:none"') # hide competitive stuff in the beginning
+def listing_row(link, retailer, brand, family, problem_class, problem, problem_detail, date_time, addressed, reopened):
+    additional_css = ('' if (problem_class != '' and problem_class != 'deleted' and (not addressed)) else ' style="display:none"') # hide competitive stuff in the beginning
     if not problem: problem = ''
     if not problem_detail: problem_detail = ''
     if (not problem_class) or ('' == problem_class): problem_class = 'competitive'
+    data_status = problem_class if not addressed else 'addressed'
     problem_class_nickname = _problem_class_to_nickname.get(problem_class, problem_class)
     retailer_logo_url = _retailer_logos.get(retailer.lower(), 'http://www.publicdomainpictures.net/pictures/40000/velka/question-mark.jpg')
 
     result = []
     result.append('''
-									<tr data-status="''' + problem_class + '"' + additional_css + '''>
+									<tr data-status="''' + data_status + '"' + additional_css + '''>
 										<td>
 											<div class="media">
 												<a href="''' + link + '''" target=_blank class="pull-left">
@@ -91,14 +94,17 @@ def listing_row(link, retailer, brand, family, problem_class, problem, problem_d
 													<span class="media-meta pull-right">''' + date_time.strftime('%b %d, %I:%M %p') + '''</span>
 													<h4 class="title"><a class="title" href="''' + link + '''" target=_blank>''')
     result.append(brand + ' : ' + family)
-    result.append('''
-														</a><a href="''' + link + '''" target=_blank><span class="pull-right ''' + problem_class + '''">(''' + problem_class_nickname + ''')</span></a>
-													</h4>''')
+    decoration = ""
+    if (addressed):
+        decoration = ' style="text-decoration: line-through;" title="' + addressed + '"'
+    if (reopened):
+        decoration = ' style="text-decoration: underline;" title="' + reopened + '"'
+    result.append('</a><a href="' + link + '" target=_blank><span class="pull-right ' + problem_class + '"' + decoration + '>(' + problem_class_nickname + ')</span></a></h4>')
     result.append('''
 													<p class="summary">''')
     if (problem or problem_detail):
         result.append(problem + ': ' + problem_detail)
-    else: result.append('&#x2611;')
+    else: result.append('&#x2611; looking good!')
     result.append('''</p>
 												</div>
 											</div>
@@ -114,27 +120,41 @@ def listing_row(link, retailer, brand, family, problem_class, problem, problem_d
 											</div>
 											-->
 										</td>
-										<td>
-<button title='remove from the list' class="btn btn-default btn-xs" data-title="Delete" data-toggle="modal" data-target="#delete" onclick='setDeleteId("''' + link + '''");'>&#x1F5D9;</button>
+										<td>''')
+    delete_button = '''<button title='remove from the list' class="btn btn-default btn-xs" data-title="Delete" data-toggle="modal" data-target="#delete" onclick='setDeleteId("''' + link + '''");'>&#x1F5D9;</button>'''
+    if (addressed or (problem_class == 'deleted')):
+        delete_button = '''<button title='re-open the issue back' class="btn btn-danger btn-xs" data-title="Reopen" data-toggle="modal" data-target="#reopen" onclick='setReopenId("''' + link + '''");'><span class="glyphicon glyphicon-arrow-left"></span></button>'''
+    result.append(delete_button)
+    result.append('''
 										</td>										
 									</tr>''')
     return '\n'.join(result)
 
 
 def problem_class_count(appearance_data, problem_class):
-    if (problem_class == 'competitive'): problem_class = ''
-    return sum(int(row['problem_class'] == problem_class) for row in appearance_data.values())
+    if (problem_class == 'deleted'):
+        return ""
+    elif (problem_class == 'addressed'):
+        result = sum(int('addressed' in row) for row in appearance_data.values())
+    else:
+        if (problem_class == 'competitive'): problem_class = ''
+        result = sum(int('addressed' not in row and row['problem_class'] == problem_class) for row in appearance_data.values())
+    return (" (" + str(result) + ")") if (0 < result) else ""
+
 
 def data_table(appearance_data, report_selector_text, username):
     problem_classes = set(row.get('problem_class','') for row in appearance_data.values())\
                       | set(_problem_class_to_button_type.keys()) \
                       | set(_problem_class_to_nickname.keys())
     problem_classes.discard('')
+    problem_classes.discard('deleted')
     problem_tuples = sorted([(_problem_class_to_nickname.get(x,x), x) for x in sorted(list(problem_classes))])
     problem_classes = [x[1] for x in problem_tuples]
+    problem_classes.append('addressed')
+    problem_classes.append('deleted')
     logout_button = ""
     if username:
-        logout_button = '<button type="button" class="btn btn-default btn-sm" onclick="logout()" title="not ''' + username + ' anymore?" onlcick="logout"><span class="glyphicon glyphicon-log-out"></span> logout (' + username + ')</button>'
+        logout_button = '<button type="button" class="btn btn-default btn-sm" onclick="logout()" title="not ''' + username + ' anymore?" onlcick="logout"><span class="glyphicon glyphicon-log-out"></span> logout</button>'
     result = []
     result.append('''
 <!-- https://bootsnipp.com/snippets/featured/easy-table-filter -->
@@ -147,7 +167,7 @@ def data_table(appearance_data, report_selector_text, username):
 					<div class="panel-body">
 						<div class="pull-right">
 							<div class="btn-group">
-''' + '\n'.join('<button type="button" class="btn ' + _problem_class_to_button_type.get(x, 'btn-link') + ' btn-filter btn-sm" data-target="' + x + '">' + _problem_class_to_nickname.get(x, x) + ' (' + str(problem_class_count(appearance_data, x)) + ')</button>' for x in problem_classes) + '''
+''' + '\n'.join('<button type="button" class="btn ' + _problem_class_to_button_type.get(x, 'btn-link') + ' btn-filter btn-sm" data-target="' + x + '">' + _problem_class_to_nickname.get(x, x) + problem_class_count(appearance_data, x) + '</button>' for x in problem_classes) + '''
 								<button type="button" class="btn btn-default btn-filter btn-sm" data-target="all">all</button>
 								''' + logout_button + '''
 							</div>
@@ -164,7 +184,9 @@ def data_table(appearance_data, report_selector_text, username):
                                   row.get('problem_class', ''),\
                                   row.get('problem', ''),\
                                   row.get('problem_detail', ''),\
-                                  row['local_time']))
+                                  row['local_time'],
+                                  row.get('addressed', None),
+                                  row.get('re-opened', None)))
     
     result.append('''								</tbody>
 							</table>
@@ -223,6 +245,14 @@ function setDeleteId(id) {
         alert("deleteForm not found");
     }
 }
+function setReopenId(id) {
+    var x = document.forms["reopenForm"];
+    if (x) {
+        x["reopenId"].value = id;
+    } else {
+        alert("reopenForm not found");
+    }
+}
 function doDelete(forHowLong) {
     var x = document.forms["deleteForm"];
     if (x) {
@@ -231,6 +261,15 @@ function doDelete(forHowLong) {
         x.submit();
     } else {
         alert("deleteForm not found");
+    }
+}
+function doReopen() {
+    var x = document.forms["reopenForm"];
+    if (x) {
+        x["follow"].value = window.location.href
+        x.submit();
+    } else {
+        alert("reopenForm not found");
     }
 }
 </script>
@@ -268,6 +307,37 @@ function doDelete(forHowLong) {
 <input type="hidden" id="follow" name="follow">
 </form>
 
+<!-- the reopen popup -->
+    <div class="modal fade" id="reopen" tabindex="-1" role="dialog" aria-labelledby="edit" aria-hidden="true">
+      <div class="modal-dialog">
+    <div class="modal-content" style="width:632px">
+          <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true"><span class="glyphicon glyphicon-arrow-left" aria-hidden="true"></span></button>
+        <h4 class="modal-title custom_align" id="Heading">Reopening an Issue</h4>
+      </div>
+          <div class="modal-body">
+       
+       <div class="alert alert-danger"><span class="glyphicon glyphicon-warning-sign"></span>
+       Are you sure that the issue/SKU has to be re-opened?
+       </div>
+       
+      </div>
+      <div class="modal-footer " style="width:630px">
+        <button type="button" class="btn btn-primary" onclick="doReopen();"><span class="glyphicon glyphicon-ok-sign"></span> Yes, have to re-open the issue back</button>
+        <button type="button" class="btn btn-default" data-dismiss="modal"><span class="glyphicon glyphicon-remove"></span> No</button>
+      </div>
+    </div>
+    <!-- /.modal-content --> 
+  </div>
+      <!-- /.modal-dialog --> 
+    </div>
+
+<!-- the "reopen" form -->
+<form method="post" id="reopenForm">
+<input type="hidden" id="reopenId" name="reopenId">
+<input type="hidden" id="follow" name="follow">
+</form>
+
  ''')
     if username:
         result.append('''<form method="post" id="logoutForm"><input type="hidden" id="follow" name="follow"><input type="hidden" name="logout" value="''' + username + '''"></form>''')    
@@ -277,7 +347,7 @@ _html_head = '''
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>Low-Hanging Fruits</title>
+  <title>Low-Hanging Fruit</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">

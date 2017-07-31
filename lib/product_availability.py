@@ -41,7 +41,7 @@ class ListingAppearance:
         self.values = result
 
 
-LISTING_STATUS_FIELDS = ['time', 'username', 'id', 'status', 'expiration']
+LISTING_STATUS_FIELDS = ['utc_time', 'local_time', 'username', 'id', 'status', 'expiration']
 
 # what did we do to a listing
 class ListingStatus:
@@ -66,8 +66,9 @@ class ListingStatus:
                         if 'id' not in row:
                             logging.warn("line %d in '%s' does not define column '%s'" % (line_no, file_name, 'id'))
                             continue
-                        row['time'] = utc.localize(dt.datetime.strptime(row['time'], TIME_FORMAT))
-                        row['expiration'] = utc.localize(dt.datetime.strptime(row['expiration'], TIME_FORMAT))
+                        row['utc_time'] = dt.datetime.strptime(row['utc_time'], TIME_FORMAT)
+                        row['local_time'] = dt.datetime.strptime(row['local_time'], TIME_FORMAT)
+                        row['expiration'] = dt.datetime.strptime(row['expiration'], TIME_FORMAT)
                         result[row['id']] = row
             except:
                 print("in load_latest: " + "\n".join([''] + traceback.format_tb(sys.exc_info()[2])))
@@ -78,36 +79,39 @@ class ListingStatus:
         # figure out the file name
         def unfinished_name(filename):
             return filename + ".unfinished"
-        now = dt.datetime.utcnow()
-        results_file = "listing_status_" + now.strftime("%Y%m%d-%H%M%S%f") + ".csv"
+        utc_time = dt.datetime.utcnow()
+        local_time = dt.datetime.now()
+        results_file = "listing_status_" + utc_time.strftime("%Y%m%d-%H%M%S%f") + ".csv"
         # figure out the expiration time for this status
         if not isinstance(expiration, dt.datetime):
             for_x_days_from_now = re.match("for (\d+) days", str(expiration))
             if for_x_days_from_now:
                 print('expiration "%s" parsed successfully' % str(expiration))
-                expiration = now + dt.timedelta(days=int(for_x_days_from_now.groups()[0]))
+                expiration = utc_time + dt.timedelta(days=int(for_x_days_from_now.groups()[0]))
             elif (expiration == "forever"):
                 print('expiration "%s" parsed successfully' % str(expiration))
                 expiration = dt.datetime.max
+            elif (expiration == "now"):
+                print('expiration "%s" parsed successfully' % str(expiration))
+                expiration = utc_time
             else:
                 raise ValueError("expiration '%s' is not valid" % str(expiration))
         # create a new status entry
-        entry = { 'time' : now, 'username' : username, 'id' : id, 'status' : status, 'expiration' : expiration }
+        entry = { 'utc_time' : utc_time, 'local_time' : local_time, 'username' : username, 'id' : id, 'status' : status, 'expiration' : expiration }
         self.values[id] = entry
         # write it all to the disk
         with open(unfinished_name(results_file), "w") as result_stream:
             results_writer = csv.DictWriter(result_stream, fieldnames=LISTING_STATUS_FIELDS, extrasaction='ignore', lineterminator='\n')
             results_writer.writeheader()
             write_me = dict(entry)
-            write_me['time'] = entry['time'].strftime(TIME_FORMAT)
+            write_me['utc_time'] = entry['utc_time'].strftime(TIME_FORMAT)
+            write_me['local_time'] = entry['local_time'].strftime(TIME_FORMAT)
             write_me['expiration'] = entry['expiration'].strftime(TIME_FORMAT)
             results_writer.writerow(write_me)
         os.rename(unfinished_name(results_file), results_file)
         logging.info("finished writing into '" + results_file + "'")
 
-    def modify_appearance(self, listing_appearance, now):
-        utc = pytz.timezone('UTC')
-        now = utc.localize(now)
+    def modify_appearance(self, listing_appearance, utc_time):
         result = ListingAppearance()
         for id in listing_appearance.values:
             row = listing_appearance.values[id]
@@ -115,11 +119,17 @@ class ListingStatus:
             if (not status_known):
                 result.values[id] = row
                 continue # no modifications required
-            elif (status_known['status'] == 'deleted') and (status_known['expiration'] == dt.datetime.max):
-                print("skipping " + id)
-            elif (status_known['status'] == 'deleted') and (status_known['expiration'] > now):
+            elif (status_known['status'] == 'deleted') and (dt.timedelta(hours=1) > (dt.datetime.max - status_known['expiration'])):
                 row = dict(row)
-                row['problem_class'] = 'wip'
-                row['problem_detail'] = "%s said the issue was already resolved @ %s (%s)" % (status_known['username'], status_known['time'].strftime("%Y-%m-%d %H:%M"), row['problem_detail'])
+                row['problem_class'] = 'deleted'
                 result.values[id] = row
+                continue # modified to appear in a wastebasket
+            elif (status_known['expiration'] > utc_time):
+                row = dict(row)
+                if (status_known['status'] == 'deleted'):
+                    row['addressed'] = "%s: %s said that issue had been already addressed" % (status_known['local_time'].strftime('%b %d, %I:%M %p'), status_known['username'])
+                elif (status_known['status'] == 're-opened'):
+                    row['re-opened'] = "%s: %s re-opened the issue back" % (status_known['local_time'].strftime('%b %d, %I:%M %p'), status_known['username'])
+                result.values[id] = row
+                continue # modified to provide more information
         return result
