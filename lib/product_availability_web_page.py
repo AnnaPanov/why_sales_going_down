@@ -51,7 +51,7 @@ $(document).on("change","input[type=radio]",function(){
 _problem_class_to_nickname = {
     'competitive' : 'good',
     'configuration' : 'not set',
-    'availability' : 'not in stock',
+    'availability' : 'not there',
     'reviews' : 'sad reviews',
     #'assets' : 'wrong assets',
     'deleted' : '<span class="glyphicon glyphicon-trash" title="deleted"></span>',
@@ -606,7 +606,7 @@ _enter_username_popup = '''
 <!--
           <button type="button" class="close" data-dismiss="modal">&times;</button>
 -->
-          <h4 class="modal-header" style="font-size: 18pt"><span class="glyphicon glyphicon-comment"></span> Hi! Welcome to "Low-Hanging Fruits"<br></h4>
+          <h4 class="modal-header" style="font-size: 18pt"><span class="glyphicon glyphicon-comment"></span> Hi!<br></h4>
         </div>
         <div class="modal-body" style="padding:40px 50px;">
           <form name="introduction" role="form" method="post" onsubmit="return validateIntroduction()">
