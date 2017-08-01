@@ -52,7 +52,7 @@ _problem_class_to_nickname = {
     'competitive' : 'good',
     'configuration' : 'not set',
     'availability' : 'not there',
-    'reviews' : 'sad reviews',
+    'reviews' : 'review issues',
     #'assets' : 'wrong assets',
     'deleted' : '<span class="glyphicon glyphicon-trash" title="deleted"></span>',
 }
@@ -121,7 +121,7 @@ def listing_row(link, retailer, brand, family, problem_class, problem, problem_d
 											-->
 										</td>
 										<td>''')
-    delete_button = '''<button title='remove from the list' class="btn btn-default btn-xs" data-title="Delete" data-toggle="modal" data-target="#delete" onclick='setDeleteId("''' + link + '''");'>&#x1F5D9;</button>'''
+    delete_button = '''<button title='remove from the list' class="btn btn-default btn-xs" data-title="Delete" data-toggle="modal" data-target="#delete" onclick='setDeleteId("''' + link + '''");'>x</button>'''
     if (addressed or (problem_class == 'deleted')):
         delete_button = '''<button title='re-open the issue back' class="btn btn-danger btn-xs" data-title="Reopen" data-toggle="modal" data-target="#reopen" onclick='setReopenId("''' + link + '''");'><span class="glyphicon glyphicon-arrow-left"></span></button>'''
     result.append(delete_button)
