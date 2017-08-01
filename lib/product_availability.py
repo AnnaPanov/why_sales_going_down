@@ -76,6 +76,8 @@ class ListingStatus:
 
 
     def change_status(self, id, status, expiration, username):
+        if not username:
+            username = "Anonymous User"
         # figure out the file name
         def unfinished_name(filename):
             return filename + ".unfinished"
