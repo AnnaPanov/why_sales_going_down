@@ -52,7 +52,7 @@ _problem_class_to_nickname = {
     'competitive' : 'good',
     'configuration' : 'not set',
     'availability' : 'not there',
-    'reviews' : 'review issues',
+    'reviews' : 'problems with reviews',
     #'assets' : 'wrong assets',
     'deleted' : '<span class="glyphicon glyphicon-trash" title="deleted"></span>',
 }

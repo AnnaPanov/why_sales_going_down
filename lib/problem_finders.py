@@ -77,7 +77,7 @@ def macys_problem_finder(url, config):
         review_count = int(review_count_found.groups()[0])
         if (review_count == 0):
             return ProductProblem(NO_REVIEWS, "no reviews found")
-        if (review_count < 3):
+        if (review_count < 15):
             return ProductProblem(FEW_REVIEWS, "only %d reviews" % review_count)
     except:
         logging.error("failed parse review count for '%s': %s" % (url, str(sys.exc_info())))
@@ -126,7 +126,7 @@ def sephora_problem_finder(url, config):
     review_count = int(reviews_found.groups()[0])
     if (review_count == 0):
         return ProductProblem(NO_REVIEWS, "no reviews found on page")
-    if (review_count < 3):
+    if (review_count < 15):
         return ProductProblem(FEW_REVIEWS, "only %d reviews found on page" % review_count)
     rating_found = re.search('"rating":\s*([0-9]*\.[0-9]+|[0-9]+)', page.text)
     if (rating_found):
@@ -148,9 +148,38 @@ Ulta
 def ulta_problem_finder(url, config):
     # 1. load the product page
     page = _load_product_page(url, config)
+
     # 2. search for typical problems
+    review_count = -1
+    average_rating = -1
     if ("his product is no longer available" in page.text):
         return ProductProblem(STOCKOUT, "product no longer available")
+    out_of_stock = None
+    out_of_stock_found = re.search('"outOfStock"\s*:\s*"?(true|false)"?', page.text)
+    if (out_of_stock_found):
+        out_of_stock = out_of_stock_found.groups()[0];
+    else:
+        return ProductProblem(CONFIG_ERROR, "cannot establish whether the product is out of stock or not")
+    if (out_of_stock == "true"):
+        return ProductProblem(STOCKOUT, "product is out of stock")
+
+    review_count_found = re.search('<meta[^>]*meta_reviewCount[^>]*content="?(\d+)"?', page.text)
+    if (review_count_found):
+        review_count = int(review_count_found.groups()[0]);
+    else:
+        return ProductProblem(CONFIG_ERROR, "cannot establish how many reviews the product has")
+    average_rating_found = re.search('<meta[^>]*meta_rating[^>]*content="?([0-9]*\.[0-9]+|[0-9]+)"?', page.text)
+    if (average_rating_found):
+        average_rating = float(average_rating_found.groups()[0])
+    else:
+        return ProductProblem(CONFIG_ERROR, "cannot find the average rating of the product")    
+    if (review_count == 0):
+        return ProductProblem(NO_REVIEWS, "no reviews")
+    if (review_count < 15):
+        return ProductProblem(FEW_REVIEWS, "only %d reviews" % review_count)
+    if (average_rating < 3):
+        return ProductProblem(LOW_RATING, "low average rating: %f" % average_rating)
+
     # 3. if problems not found, everything is good!
     return None
 _problem_finders["ulta"] = ulta_problem_finder
@@ -164,6 +193,9 @@ def bloomingdales_problem_finder(url, config):
     # 1. load the product page
     page = _load_product_page(url, config)
     # 2. search for typical problems
+    availability_message = None
+    for match in re.findall('"?AVAILABILIT_MESSAGE"?\s?:\s?"([^"]+)"', page.text):
+        availability_message = match
     if ('"AVAILABILITY_MESSAGE":"ON ORDER' in page.text):
         return ProductProblem(STOCKOUT, "product is on order")
     if ('"AVAILABILITY_MESSAGE":"NOT ' in page.text):
@@ -184,6 +216,38 @@ def nordstrom_problem_finder(url, config):
     # 2. search for typical problems
     if ('Backordered Item' in page.text):
         return ProductProblem(STOCKOUT, "backordered item")
+    digital_data_found = re.search("window.digitalData = ([^<]+)<", page.text);
+    if (not digital_data_found):
+        return ProductProblem(CONFIG_ERROR, "cannot find digital data on whether product is available or not")
+    data = digital_data_found.groups()[0].strip()
+    if (data[-1] == ";"): data = data[0:(len(data)-1)]
+    try:
+        data = json.loads(data)
+        product = data['product']
+        if not product:
+            return ProductProblem(CONFIG_ERROR, "cannot find product for product info")
+        product_info = product['productInfo']
+        if not product_info:
+            return ProductProblem(CONFIG_ERROR, "cannot find product info within product")
+        if ('isAvailable' not in product_info):
+            return ProductProblem(CONFIG_ERROR, "product availability information not found")
+        is_available = product_info['isAvailable']
+        if (not is_available):
+            return ProductProblem(STOCKOUT, "product not available")
+        if ('reviewsCount' not in product_info):
+            return ProductProblem(CONFIG_ERROR, "review count information not found")
+        review_count = product_info['reviewsCount']
+        if (review_count == 0):
+            return ProductProblem(NO_REVIEWS, "no reviews")
+        if (review_count < 15):
+            return ProductProblem(FEW_REVIEWS, "only %d reviews" % review_count)
+        if ('averageRating' not in product_info):
+            return ProductProblem(CONFIG_ERROR, "average rating information not found")
+        average_rating = product_info['averageRating']
+        if (average_rating < 3):
+            return ProductProblem(LOW_RATING, "average rating %f" % average_rating)
+    except:
+        return ProductProblem(CONFIG_ERROR, "problems loading digital data in json")
     # 3. if problems not found, everything is good!
     return None
 _problem_finders["nordstrom"] = nordstrom_problem_finder

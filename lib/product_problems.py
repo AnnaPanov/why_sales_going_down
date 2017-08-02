@@ -16,7 +16,7 @@ NO_REVIEWS = ("no reviews", PROBLEM_WITH_REVIEWS, 52)
 LOW_RATING = ("low review rating", PROBLEM_WITH_REVIEWS, 51)
 FEW_REVIEWS = ("few reviews", PROBLEM_WITH_REVIEWS, 50)
 #...
-NO_PROBLEM = (0, "", "no problem")
+NO_PROBLEM = ("", "no problem", 0)
 
 
 # what a problem description looks like
