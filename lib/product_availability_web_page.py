@@ -67,7 +67,7 @@ _problem_class_to_button_type = {
 _retailer_logos = {
     "macy's" : 'https://vignette1.wikia.nocookie.net/logopedia/images/b/b8/Macy%27s_Vertical_Logo.svg',
     "macys" : 'https://vignette1.wikia.nocookie.net/logopedia/images/b/b8/Macy%27s_Vertical_Logo.svg',
-    "ulta" : 'https://logosave.com/images/large/common/02/ulta-beauty.png',
+    "ulta" : 'https://upload.wikimedia.org/wikipedia/commons/4/40/ULTA_Beauty_Logo.png',
     "sephora" : 'http://www.parquecomercial-lacanada.com/sites/parquecomercial-lacanada.com/files/field/operador-logo/sephora_-_logo.jpg',
     "bloomingdales" : 'https://static.couponfollow.com/bloomingdales-com/logo.jpg',
     "nordstrom" : 'https://media.glassdoor.com/sqll/1704/nordstrom-squarelogo-1382998996505.png',
