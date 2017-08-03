@@ -436,6 +436,8 @@ box-shadow: none;
 	-------------------------------------------------- */
 body {
 	font-family: 'Open Sans', sans-serif;
+	background-image: url("http://www.ecmag.com/sites/default/files/xml_uploads/unzipped/apple_branch_fruit_iStock_000005660685_Large_0.jpg");
+	background-repeat: no-repeat;
 	color: #353535;
 }
 h1 {
