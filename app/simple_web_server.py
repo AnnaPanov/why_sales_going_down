@@ -8,13 +8,14 @@ import pdb
 
 import product_availability_web_page as pa_page
 import product_availability as pa
-
+import product_config as pc
 
 class S(BaseHTTPRequestHandler):
     # global variables
     last_time_listings_loaded = dt.datetime.min # never
     listing_appearance = pa.ListingAppearance()
-    listing_status = pa.ListingStatus()    
+    listing_status = pa.ListingStatus()
+    listings = None
     
     def _set_headers(self):
         self.send_response(200)
@@ -41,7 +42,8 @@ class S(BaseHTTPRequestHandler):
             parsed_path = up.urlparse(self.path)
             parsed_query = up.parse_qs(parsed_path.query)
             report_type = parsed_query.get('report_type',[''])[0]
-            result = pa_page.availability_report(S.listing_appearance, S.listing_status, report_type, self.username())
+            selected_listing_ids = S.listings.keys()
+            result = pa_page.availability_report(selected_listing_ids, S.listing_appearance, S.listing_status, report_type, self.username())
             self.wfile.write(''.join(result).encode('utf-8'))
         except ConnectionAbortedError as e:
             pass # this happens with web browsers, and it's not a problem
@@ -102,7 +104,20 @@ def run(server_class=HTTPServer, handler_class=S, port=80):
 
 if __name__ == "__main__":
     import sys
-    if len(sys.argv) == 2:
-        run(port=int(sys.argv[1]))
-    else:
-        run()
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--product_config", type=str, required=True, help="the csv config file with product listings")
+    parser.add_argument("--port", type=int, required=False, default=80, help="on which port to listen")
+    args = parser.parse_args()
+
+    errors = []
+    S.listings = pc.load(args.product_config, errors)
+    if (0 < len(errors)):
+        for error in errors:
+            print(error.detail)
+            sys.exit(1)
+    print("product config loaded successfully from '%s' (total of %d listings)" % (args.product_config, len(S.listings)))
+
+    args = parser.parse_args()
+    run(port=args.port)

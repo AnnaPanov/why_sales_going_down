@@ -191,6 +191,13 @@ Bloomingdales
 '''
 def bloomingdales_problem_finder(url, config):
     # 1. load the product page
+    #headers = {\
+    #    'user-agent': 'Availability Checker/0.0.1',\
+    #    'Accept': 'application/json',\
+    #    'X-Macys-Webservice-Client-Id': 'ubmqtbg8k3kmwuszkcv2ng5z'\
+    #    }
+    #pdb.set_trace()
+    #response = requests.get("http://api.bloomingdales.com/v4/catalog/product/450673?retrieveallupcs=true", headers=headers)
     page = _load_product_page(url, config)
     # 2. search for typical problems
     availability_message = None

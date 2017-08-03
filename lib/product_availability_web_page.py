@@ -2,20 +2,21 @@ import product_availability as pa
 import product_config as pc
 import datetime as dt
 
-REPORT_TYPES = [ "remaining issues", "work in progress" ]
-
-def availability_report(listing_appearance, listing_status, selected_report, username):
+def availability_report(selected_listing_ids, listing_appearance, listing_status, selected_report, username):
     result = []
     result.append(_html_head)
     result.append('<body>')
     #result.append('<h3>Low-Hanging Fruit &#x1f347;</h3><br><br>')
     #selector = report_selector(selected_report)
-    modified_appearance = listing_status.modify_appearance(listing_appearance, dt.datetime.utcnow())
+    modified_appearance = listing_status.modify_appearance(selected_listing_ids, listing_appearance, dt.datetime.utcnow())
     result.append(data_table(modified_appearance.values, "", username))
     if (username is None):
         result.append(_enter_username_popup)
     result.append('</body></html>')
     return ''.join(result)
+
+
+REPORT_TYPES = [ "remaining issues", "work in progress" ]
 
 def report_selector(report):
     selected_report = None
@@ -67,7 +68,7 @@ _problem_class_to_button_type = {
 _retailer_logos = {
     "macy's" : 'https://vignette1.wikia.nocookie.net/logopedia/images/b/b8/Macy%27s_Vertical_Logo.svg',
     "macys" : 'https://vignette1.wikia.nocookie.net/logopedia/images/b/b8/Macy%27s_Vertical_Logo.svg',
-    "ulta" : 'https://upload.wikimedia.org/wikipedia/commons/4/40/ULTA_Beauty_Logo.png',
+    "ulta" : 'https://logosave.com/images/large/common/02/ulta-beauty.png',
     "sephora" : 'http://www.parquecomercial-lacanada.com/sites/parquecomercial-lacanada.com/files/field/operador-logo/sephora_-_logo.jpg',
     "bloomingdales" : 'https://static.couponfollow.com/bloomingdales-com/logo.jpg',
     "nordstrom" : 'https://media.glassdoor.com/sqll/1704/nordstrom-squarelogo-1382998996505.png',

@@ -113,10 +113,12 @@ class ListingStatus:
         os.rename(unfinished_name(results_file), results_file)
         logging.info("finished writing into '" + results_file + "'")
 
-    def modify_appearance(self, listing_appearance, utc_time):
+    def modify_appearance(self, selected_listing_ids, listing_appearance, utc_time):
         result = ListingAppearance()
-        for id in listing_appearance.values:
-            row = listing_appearance.values[id]
+        for id in selected_listing_ids:
+            row = listing_appearance.values.get(id)
+            if not row:
+                continue
             status_known = self.values.get(row[pc.FIELD_LINK], None)
             if (not status_known):
                 result.values[id] = row
