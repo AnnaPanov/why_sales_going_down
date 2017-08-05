@@ -126,13 +126,13 @@ def sephora_problem_finder(url, config):
     review_count = int(reviews_found.groups()[0])
     if (review_count == 0):
         return ProductProblem(NO_REVIEWS, "no reviews found on page")
-    if (review_count < 15):
-        return ProductProblem(FEW_REVIEWS, "only %d reviews found on page" % review_count)
     rating_found = re.search('"rating":\s*([0-9]*\.[0-9]+|[0-9]+)', page.text)
     if (rating_found):
         rating = float(rating_found.groups()[0])
         if (rating < 3):
             return ProductProblem(LOW_RATING, "average rating only %f" % rating)
+    if (review_count < 15):
+        return ProductProblem(FEW_REVIEWS, "only %d reviews found on page" % review_count)
     # 4. if we are here, we failed to find that specific SKU on the page
     if (not sku_found):
         return ProductProblem(CONFIG_ERROR, "SEO droplet has no availability information for this skuId")
@@ -175,10 +175,10 @@ def ulta_problem_finder(url, config):
         return ProductProblem(CONFIG_ERROR, "cannot find the average rating of the product")    
     if (review_count == 0):
         return ProductProblem(NO_REVIEWS, "no reviews")
+    if (average_rating < 3):
+        return ProductProblem(LOW_RATING, "average rating only %f" % average_rating)
     if (review_count < 15):
         return ProductProblem(FEW_REVIEWS, "only %d reviews" % review_count)
-    if (average_rating < 3):
-        return ProductProblem(LOW_RATING, "low average rating: %f" % average_rating)
 
     # 3. if problems not found, everything is good!
     return None
@@ -190,25 +190,62 @@ _problem_finders["ulta"] = ulta_problem_finder
 Bloomingdales
 '''
 def bloomingdales_problem_finder(url, config):
-    # 1. load the product page
-    #headers = {\
-    #    'user-agent': 'Availability Checker/0.0.1',\
+    product_id = re.search("\?ID=(\d+)", url)
+    if not product_id:
+        return ProductProblem(CONFIG_ERROR, "url does not have ID= in it (%s)" % url)
+    headers = {\
+        'user-agent': 'Availability Checker/0.0.1',\
     #    'Accept': 'application/json',\
     #    'X-Macys-Webservice-Client-Id': 'ubmqtbg8k3kmwuszkcv2ng5z'\
-    #    }
-    #pdb.set_trace()
-    #response = requests.get("http://api.bloomingdales.com/v4/catalog/product/450673?retrieveallupcs=true", headers=headers)
-    page = _load_product_page(url, config)
-    # 2. search for typical problems
-    availability_message = None
-    for match in re.findall('"?AVAILABILIT_MESSAGE"?\s?:\s?"([^"]+)"', page.text):
-        availability_message = match
-    if ('"AVAILABILITY_MESSAGE":"ON ORDER' in page.text):
-        return ProductProblem(STOCKOUT, "product is on order")
-    if ('"AVAILABILITY_MESSAGE":"NOT ' in page.text):
-        return ProductProblem(STOCKOUT, "not available")
-    # 3. if problems not found, everything is good!
-    return None
+    }
+    page = requests.get(url, headers=headers)
+    for block in page.text.split("</script"):
+        if "<script" not in block:
+            continue
+        script = ">".join((block.split("<script")[-1].split(">")[1:]))
+        script = script.strip()
+        if "AVAILABILITY_MESSAGE" not in script:
+            continue
+        # this script must be parseable in json, otherwise we must throw
+        availability_data = json.loads(script)
+        # and this blob of json must have a "product" entry
+        product_entry = availability_data["product"]
+        if "sizeColorTypeByUPC" not in product_entry:
+            return ProductProblem(CONFIG_ERROR, "availability information by UPC not found")
+        some_upcs_are_not_available = False
+        availability_by_upc = product_entry["sizeColorTypeByUPC"]
+        for upc in availability_by_upc:
+            availability = availability_by_upc[upc]
+            message = availability["AVAILABILITY_MESSAGE"]
+            if ("In Stock:" in message):
+                continue
+            logging.warn("availability message for UPC %s does not contain 'In Stock': %s" % (upc, message))
+            some_upcs_are_not_available = False
+        low_availability = False
+        if ("attributes" in product_entry):
+            hide_low_availability = product_entry["attributes"].get("HIDE_LOW_AVAILABILITY_MESSAGE","")
+            if (1 == len(hide_low_availability)) and (hide_low_availability[0] == 'N'):
+                low_availability = True
+        if (some_upcs_are_not_available):
+            return ProductProblem(STOCKOUT, "at least some UPCs are not in stock")
+        if (low_availability):
+            return ProductProblem(ALMOST_STOCKOUT, "almost sold out")
+        number_of_reviews = 0
+        average_rating = None
+        if "numberOfReviews" in product_entry:
+            number_of_reviews = int(product_entry["numberOfReviews"])
+            average_rating = float(product_entry["custRating"])
+        if (0 == number_of_reviews):
+            return ProductProblem(NO_REVIEWS, "no reviews found")
+        if (average_rating < 3):
+            return ProductProblem(LOW_RATING, "average rating only %f" % average_rating)
+        if (15 > number_of_reviews):
+            return ProductProblem(FEW_REVIEWS, "only %d reviews" % number_of_reviews)
+        # if we are here, the product looks good
+        return None
+
+    # if we reached here, we failed to find the product info: most likely, we have a configuration problem
+    return ProductProblem(CONFIG_ERROR, "availability information in JSON format is not found")
 _problem_finders["bloomingdale's"] = bloomingdales_problem_finder
 _problem_finders["bloomingdales"] = bloomingdales_problem_finder
 
@@ -246,13 +283,13 @@ def nordstrom_problem_finder(url, config):
         review_count = product_info['reviewsCount']
         if (review_count == 0):
             return ProductProblem(NO_REVIEWS, "no reviews")
-        if (review_count < 15):
-            return ProductProblem(FEW_REVIEWS, "only %d reviews" % review_count)
         if ('averageRating' not in product_info):
             return ProductProblem(CONFIG_ERROR, "average rating information not found")
         average_rating = product_info['averageRating']
         if (average_rating < 3):
-            return ProductProblem(LOW_RATING, "average rating %f" % average_rating)
+            return ProductProblem(LOW_RATING, "average rating only %f" % average_rating)
+        if (review_count < 15):
+            return ProductProblem(FEW_REVIEWS, "only %d reviews" % review_count)
     except:
         return ProductProblem(CONFIG_ERROR, "problems loading digital data in json")
     # 3. if problems not found, everything is good!
