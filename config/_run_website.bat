@@ -3,4 +3,4 @@ set TIMESTAMP=%DATE:~-4%%DATE:~-7,-5%%DATE:~-10,-8%_%time:~-11,2%%time:~-8,2%%ti
 set LOGFILE=website_%TIMESTAMP%.log
 rem echo started at %TIMESTAMP% > %LOGFILE%
 
-python ..\app\simple_web_server.py --product_config bestsellers.csv
+python ..\app\simple_web_server.py --product_config ..\config\bestsellers.csv
