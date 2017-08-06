@@ -212,24 +212,26 @@ def bloomingdales_problem_finder(url, config):
         product_entry = availability_data["product"]
         if "sizeColorTypeByUPC" not in product_entry:
             return ProductProblem(CONFIG_ERROR, "availability information by UPC not found")
-        some_upcs_are_not_available = False
+        upcs_not_available = []
+        some_upcs_are_available = False
         availability_by_upc = product_entry["sizeColorTypeByUPC"]
         for upc in availability_by_upc:
             availability = availability_by_upc[upc]
             message = availability["AVAILABILITY_MESSAGE"]
             if ("In Stock:" in message):
+                some_upcs_are_available = True
                 continue
             logging.warn("availability message for UPC %s does not contain 'In Stock': %s" % (upc, message))
-            some_upcs_are_not_available = False
+            upcs_not_available.append(upc)
         low_availability = False
         if ("attributes" in product_entry):
             hide_low_availability = product_entry["attributes"].get("HIDE_LOW_AVAILABILITY_MESSAGE","")
             if (1 == len(hide_low_availability)) and (hide_low_availability[0] == 'N'):
                 low_availability = True
-        if (some_upcs_are_not_available):
-            return ProductProblem(STOCKOUT, "at least some UPCs are not in stock")
+        if (0 != len(upcs_not_available)):
+            return ProductProblem(STOCKOUT, "some UPCs are not in stock (" + ", ".join(upcs_not_available) + ")")
         if (low_availability):
-            return ProductProblem(ALMOST_STOCKOUT, "almost sold out")
+            return ProductProblem(ALMOST_STOCKOUT, "some UPCs almost sold out")
         number_of_reviews = 0
         average_rating = None
         if "numberOfReviews" in product_entry:
