@@ -2,49 +2,45 @@ import product_availability as pa
 import product_config as pc
 import datetime as dt
 
-def availability_report(product_config, listing_appearance, listing_status, username):
+def availability_report(product_config, listing_appearance, listing_status, username, retailer):
     result = []
     result.append(_html_head)
     result.append('<body>')
     #result.append('<h3>Low-Hanging Fruit &#x1f347;</h3><br><br>')
-    #selector = report_selector(selected_report)
     modified_appearance = listing_status.modify_appearance(product_config, listing_appearance, dt.datetime.utcnow())
-    result.append(data_table(modified_appearance.values, "", username))
+    result.append(data_table(modified_appearance.values, listing_appearance.distinct_retailers, username, retailer))
     if (username is None):
         result.append(_enter_username_popup)
     result.append('</body></html>')
     return ''.join(result)
 
 
-REPORT_TYPES = [ "remaining issues", "work in progress" ]
-
-def report_selector(report):
-    selected_report = None
-    if report:
-        for r in REPORT_TYPES:
-            if (r.replace(' ', '_') == report) or (r == report):
-                selected_report = r
-                break
-    if not selected_report:
-        selected_report = REPORT_TYPES[0]
+def retailer_selector(distinct_retailers, retailer):
+    selected_retailer = None
+    for r in distinct_retailers:
+        if (r == retailer):
+            selected_retailer = r
+            break
+    choices = [ "all" ] + list(distinct_retailers)
+    if not selected_retailer:
+        selected_retailer = choices[0]
     return '''
-<center>
-<div class="btn-group" data-toggle="buttons">
+<div class="btn-group btn-xs" data-toggle="buttons" style="margin-bottom:0px; margin-top:0px;">
 ''' + ''.join(('''
-  <label class="btn''' + (" active" if report_type == selected_report else "") + '''">
-    <input type="radio" value="''' + report_type.replace(' ', '_') + '''" name="report_type" ''' + ('checked' if report_type == selected_report else '') +\
-'''> <i class="fa fa-circle-o fa-2x"></i><i class="fa fa-dot-circle-o fa-2x"></i> <span>''' + report_type +  '''</span>
-  </label>''') for report_type in REPORT_TYPES) + '''
+  <label class="btn''' + (" active" if retailer == selected_retailer else "") + '''">
+    <input type="radio" value="''' + retailer + '''" name="retailer" ''' + ('checked' if retailer == selected_retailer else '') +\
+'''> <i class="fa fa-circle-o fa-2x"></i><i class="fa fa-dot-circle-o fa-2x"></i> <span>''' + retailer +  '''</span>
+  </label>''') for retailer in choices) + '''
 </div>
-</center>
 <script>
 function updateQueryStringParameter(uri, key, value) {
   var re = new RegExp("([?&])" + key + "=.*?(&|$)", "i");
   return uri.match(re) ? uri.replace(re, '$1' + key + "=" + value + '$2') : uri + (uri.indexOf('?') !== -1 ? "&" : "?") + key + "=" + value;
 }
 $(document).on("change","input[type=radio]",function(){
-    var report_type_value=$('[name="report_type"]:checked').val();
-    window.location.href = updateQueryStringParameter(window.location.href, 'report_type', report_type_value);
+    var retailer=$('[name="retailer"]:checked').val();
+    retailer = encodeURIComponent(retailer);
+    window.location.href = updateQueryStringParameter(window.location.href, 'retailer', retailer);
 });
 </script>
 '''
@@ -140,19 +136,21 @@ def listing_row(link, retailer, brand, family, title, problem_class, problem, pr
     return '\n'.join(result)
 
 
-def problem_class_count(appearance_data, problem_class):
+def problem_class_count(listings, problem_class):
     if (problem_class == 'deleted'):
         return ""
     elif (problem_class == 'addressed'):
-        result = sum(int('addressed' in row) for row in appearance_data.values())
+        result = sum(int('addressed' in row) for row in listings)
     else:
         if (problem_class == 'competitive'): problem_class = ''
-        result = sum(int('addressed' not in row and row['problem_class'] == problem_class) for row in appearance_data.values())
+        result = sum(int('addressed' not in row and row['problem_class'] == problem_class) for row in listings)
     return (" (" + str(result) + ")") if (0 < result) else ""
 
 
-def data_table(appearance_data, report_selector_text, username):
-    problem_classes = set(row.get('problem_class','') for row in appearance_data.values())\
+def data_table(appearance_data, distinct_retailers, username, retailer):
+    retailer_selector_code = retailer_selector(distinct_retailers, retailer)
+    listings = [ row for row in appearance_data.values() if (not retailer) or (retailer == "all") or (retailer == row[pc.FIELD_RETAILER]) ]
+    problem_classes = set(row.get('problem_class','') for row in listings)\
                       | set(_problem_class_to_button_type.keys()) \
                       | set(_problem_class_to_nickname.keys())
     problem_classes.discard('')
@@ -168,7 +166,6 @@ def data_table(appearance_data, report_selector_text, username):
     result.append('''
 <!-- https://bootsnipp.com/snippets/featured/easy-table-filter -->
 <div class="container">
-		''' + report_selector_text + '''
 	<div class="row">
 		<section class="content">
 			<div class="col-md-8 col-md-offset-2">
@@ -176,16 +173,17 @@ def data_table(appearance_data, report_selector_text, username):
 					<div class="panel-body">
 						<div class="pull-right">
 							<div class="btn-group">
-''' + '\n'.join('<button type="button" class="btn ' + _problem_class_to_button_type.get(x, 'btn-link') + ' btn-filter btn-sm" data-target="' + x + '">' + _problem_class_to_nickname.get(x, x) + problem_class_count(appearance_data, x) + '</button>' for x in problem_classes) + '''
+''' + '\n'.join('<button type="button" class="btn ' + _problem_class_to_button_type.get(x, 'btn-link') + ' btn-filter btn-sm" data-target="' + x + '">' + _problem_class_to_nickname.get(x, x) + problem_class_count(listings, x) + '</button>' for x in problem_classes) + '''
 								<button type="button" class="btn btn-default btn-filter btn-sm" data-target="all">all</button>
 								''' + logout_button + '''
 							</div>
 						</div>
 						<div class="table-container">
+		''' + retailer_selector_code + '''
 							<table class="table table-filter">
 								<tbody>
 ''')
-    for row in appearance_data.values():
+    for row in listings:
         listing_title = row.get(pc.FIELD_TITLE, None)
         if not listing_title:
             listing_title = row[pc.FIELD_BRAND] + ": " + row[pc.FIELD_FAMILY]

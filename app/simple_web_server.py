@@ -43,7 +43,8 @@ class S(BaseHTTPRequestHandler):
                 self.respond_with_file(S.listing_appearance.file_name, "text/csv")
                 return
             parsed_query = up.parse_qs(parsed_path.query)
-            result = pa_page.availability_report(S.listings, S.listing_appearance, S.listing_status, self.username())
+            retailer = parsed_query.get("retailer", [None])[0]
+            result = pa_page.availability_report(S.listings, S.listing_appearance, S.listing_status, self.username(), retailer)
             self._set_headers()
             self.wfile.write(''.join(result).encode('utf-8'))
         except ConnectionAbortedError as e:

@@ -38,6 +38,10 @@ class ListingAppearance:
                 row[FIELD_UTC_TIME] = utc.localize(dt.datetime.strptime(row[FIELD_UTC_TIME], TIME_FORMAT))
                 id = row[pc.FIELD_LINK]
                 result[id] = row
+        distinct_retailers = set()
+        for row in result.values():
+            distinct_retailers.add(row[pc.FIELD_RETAILER])
+        self.distinct_retailers = sorted(list(distinct_retailers))
         self.values = result
 
 
@@ -112,6 +116,7 @@ class ListingStatus:
             results_writer.writerow(write_me)
         os.rename(unfinished_name(results_file), results_file)
         logging.info("finished writing into '" + results_file + "'")
+
 
     def modify_appearance(self, product_config, listing_appearance, utc_time):
         result = ListingAppearance()
