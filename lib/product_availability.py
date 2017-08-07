@@ -25,14 +25,14 @@ class ListingAppearance:
             logging.warn("failed to find any availability observations (files matching availability*.csv)")
             return {}
         result = {}
-        file_name = file_names[-1]
-        with open(file_name) as csvfile:
+        self.file_name = file_names[-1]
+        with open(self.file_name) as csvfile:
             reader = csv.DictReader(csvfile)
             line_no = 0
             for row in reader:
                 line_no = line_no + 1
                 if pc.FIELD_LINK not in row:
-                    logging.warn("line %d in '%s' does not define column '%s'" % (line_no, file_name, pc.FIELD_LINK))
+                    logging.warn("line %d in '%s' does not define column '%s'" % (line_no, self.file_name, pc.FIELD_LINK))
                     continue
                 row[FIELD_LOCAL_TIME] = dt.datetime.strptime(row[FIELD_LOCAL_TIME], TIME_FORMAT)
                 row[FIELD_UTC_TIME] = utc.localize(dt.datetime.strptime(row[FIELD_UTC_TIME], TIME_FORMAT))

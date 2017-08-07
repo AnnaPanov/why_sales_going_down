@@ -31,7 +31,6 @@ class S(BaseHTTPRequestHandler):
         return username
 
     def do_GET(self):
-        self._set_headers()
         try:
             now = dt.datetime.now()
             if (now > S.last_time_listings_loaded + dt.timedelta(minutes=1)):
@@ -40,12 +39,17 @@ class S(BaseHTTPRequestHandler):
                 S.listing_appearance.load_latest()
                 S.listing_status.load_latest()
             parsed_path = up.urlparse(self.path)
+            if ("/download" in parsed_path.path) and (S.listing_appearance.file_name):
+                self.respond_with_file(S.listing_appearance.file_name, "text/csv")
+                return
             parsed_query = up.parse_qs(parsed_path.query)
             result = pa_page.availability_report(S.listings, S.listing_appearance, S.listing_status, self.username())
+            self._set_headers()
             self.wfile.write(''.join(result).encode('utf-8'))
         except ConnectionAbortedError as e:
             pass # this happens with web browsers, and it's not a problem
         except:
+            self._set_headers()
             self.wfile.write(str(sys.exc_info()).encode('utf-8'))
             self.wfile.write(("\n".join([''] + traceback.format_tb(sys.exc_info()[2]))).replace('\n','<br>\n').encode('utf-8'))
             return
@@ -92,6 +96,16 @@ class S(BaseHTTPRequestHandler):
         self.wfile.write(('<html><head><meta http-equiv="refresh" content="0;url='\
                               + redirect_url + '"></head></html>').encode('utf-8'))
 
+    def respond_with_file(self, file_name, content_type):
+        with open(file_name) as f:
+            download_filename = file_name.split('/')[-1].split('\\')[-1]
+            self.send_response(200)
+            self.send_header('Content-type', content_type)
+            self.send_header("Content-Disposition", "attachment; filename=\"" + download_filename +"\"")
+            self.end_headers()
+            self.wfile.write(f.read().encode('utf-8'))
+            f.close()
+            return
         
 def run(server_class=HTTPServer, handler_class=S, port=80):
     server_address = ('', port)
