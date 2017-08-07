@@ -2,13 +2,13 @@ import product_availability as pa
 import product_config as pc
 import datetime as dt
 
-def availability_report(selected_listing_ids, listing_appearance, listing_status, selected_report, username):
+def availability_report(product_config, listing_appearance, listing_status, username):
     result = []
     result.append(_html_head)
     result.append('<body>')
     #result.append('<h3>Low-Hanging Fruit &#x1f347;</h3><br><br>')
     #selector = report_selector(selected_report)
-    modified_appearance = listing_status.modify_appearance(selected_listing_ids, listing_appearance, dt.datetime.utcnow())
+    modified_appearance = listing_status.modify_appearance(product_config, listing_appearance, dt.datetime.utcnow())
     result.append(data_table(modified_appearance.values, "", username))
     if (username is None):
         result.append(_enter_username_popup)
@@ -75,7 +75,7 @@ _retailer_logos = {
     "nordstrom" : 'https://media.glassdoor.com/sqll/1704/nordstrom-squarelogo-1382998996505.png',
 }
 
-def listing_row(link, retailer, brand, family, problem_class, problem, problem_detail, date_time, addressed, reopened):
+def listing_row(link, retailer, brand, family, title, problem_class, problem, problem_detail, date_time, addressed, reopened):
     additional_css = ('' if (problem_class != '' and problem_class != 'deleted' and (not addressed)) else ' style="display:none"') # hide competitive stuff in the beginning
     if not problem: problem = ''
     if not problem_detail: problem_detail = ''
@@ -83,7 +83,6 @@ def listing_row(link, retailer, brand, family, problem_class, problem, problem_d
     data_status = problem_class if not addressed else 'addressed'
     problem_class_nickname = _problem_class_to_nickname.get(problem_class, problem_class)
     retailer_logo_url = _retailer_logos.get(retailer.lower(), 'http://www.publicdomainpictures.net/pictures/40000/velka/question-mark.jpg')
-
     result = []
     result.append('''
 									<tr data-status="''' + data_status + '"' + additional_css + '''>
@@ -95,7 +94,7 @@ def listing_row(link, retailer, brand, family, problem_class, problem, problem_d
 												<div class="media-body">
 													<span class="media-meta pull-right">''' + date_time.strftime('%b %d, %I:%M %p') + '''</span>
 													<h4 class="title"><a class="title" href="''' + link + '''" target=_blank>''')
-    result.append(brand + ' : ' + family)
+    result.append(title)
     decoration = ""
     if (addressed):
         decoration = ' style="text-decoration: line-through;" title="' + addressed + '"'
@@ -179,10 +178,14 @@ def data_table(appearance_data, report_selector_text, username):
 								<tbody>
 ''')
     for row in appearance_data.values():
+        listing_title = row.get(pc.FIELD_TITLE, None)
+        if not listing_title:
+            listing_title = row[pc.FIELD_BRAND] + ": " + row[pc.FIELD_FAMILY]
         result.append(listing_row(row[pc.FIELD_LINK],\
                                   row[pc.FIELD_RETAILER],\
                                   row[pc.FIELD_BRAND],\
                                   row[pc.FIELD_FAMILY],\
+                                  listing_title,\
                                   row.get('problem_class', ''),\
                                   row.get('problem', ''),\
                                   row.get('problem_detail', ''),\

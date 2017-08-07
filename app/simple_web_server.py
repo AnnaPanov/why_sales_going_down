@@ -41,9 +41,7 @@ class S(BaseHTTPRequestHandler):
                 S.listing_status.load_latest()
             parsed_path = up.urlparse(self.path)
             parsed_query = up.parse_qs(parsed_path.query)
-            report_type = parsed_query.get('report_type',[''])[0]
-            selected_listing_ids = S.listings.keys()
-            result = pa_page.availability_report(selected_listing_ids, S.listing_appearance, S.listing_status, report_type, self.username())
+            result = pa_page.availability_report(S.listings, S.listing_appearance, S.listing_status, self.username())
             self.wfile.write(''.join(result).encode('utf-8'))
         except ConnectionAbortedError as e:
             pass # this happens with web browsers, and it's not a problem

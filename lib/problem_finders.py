@@ -9,6 +9,11 @@ import pdb
 import re
 
 
+# this is the direction for version 1
+WE_CARE_ABOUT_REVIEW_COUNT = False
+
+
+
 _problem_finders = dict()
 def find_problems(config):
     retailer = config[product_config.FIELD_RETAILER].lower()
@@ -63,24 +68,25 @@ def macys_problem_finder(url, config):
             if not (('InStock' in availability) or ('OnlineOnly' in availability) or ('PreOrder' in availability)):
                 return ProductProblem(STOCKOUT, availability.split('/')[-1])
     rating_found = re.search('"ratingValue":\s*"([^"]+)"', seo_droplet)
-    if (rating_found):
+    review_count_found = re.search('"reviewCount":\s*"(\d+)"', seo_droplet)
+    if (rating_found and review_count_found):
         try:
             rating = float(rating_found.groups()[0])
             if (rating < 3):
-                return ProductProblem(LOW_RATING, "average rating only %f" % rating)
+                return ProductProblem(LOW_RATING, "average rating only %.2f" % rating)
         except:
             logging.error("failed parse rating for '%s': %s" % (url, str(sys.exc_info())))
-    review_count_found = re.search('"reviewCount":\s*"(\d+)"', seo_droplet)
-    if not review_count_found:
-        return ProductProblem(NO_REVIEWS, "no reviews found")
-    try:
-        review_count = int(review_count_found.groups()[0])
-        if (review_count == 0):
+    if WE_CARE_ABOUT_REVIEW_COUNT:
+        if not review_count_found:
             return ProductProblem(NO_REVIEWS, "no reviews found")
-        if (review_count < 15):
-            return ProductProblem(FEW_REVIEWS, "only %d reviews" % review_count)
-    except:
-        logging.error("failed parse review count for '%s': %s" % (url, str(sys.exc_info())))
+        try:
+            review_count = int(review_count_found.groups()[0])
+            if (review_count == 0):
+                return ProductProblem(NO_REVIEWS, "no reviews found")
+            if (review_count < 15):
+                return ProductProblem(FEW_REVIEWS, "only %d reviews" % review_count)
+        except:
+            logging.error("failed parse review count for '%s': %s" % (url, str(sys.exc_info())))
     # 4. seo droplet not found on page?
     if (not sku_found):
         return ProductProblem(CONFIG_ERROR, "SEO droplet has no availability information for this skuId")
@@ -115,24 +121,27 @@ def sephora_problem_finder(url, config):
         if ('sku' in offer) and (str(offer['sku']) == str(sku)): # this is our offer
             availability = offer.get('availability', 'KeyNotFound')
             logging.info('availability for skuId=%s is "%s"' % (sku, availability))
-            if ('InStock' in availability) or ('OnlineOnly' in availability) or ('PreOrder' in availability):
+            if ('InStock' in availability) or ('OnlineOnly' in availability) or ('PreOrder' in availability) or ('LimitedAvailability' in availability):
                 logging.info('found "%s" inside SEO droplet for this SKU' % availability)
                 sku_found = True
                 break # found this SKU and its availability is good
-            return ProductProblem(STOCKOUT, availability.split('/')[-1])
+            stockout_type = availability.split('/')[-1]
+            return ProductProblem(STOCKOUT, stockout_type)
     reviews_found = re.search('(\d+)\s+reviews', page.text)
-    if (not reviews_found):
-        return ProductProblem(NO_REVIEWS, "no reviews found on page")
-    review_count = int(reviews_found.groups()[0])
-    if (review_count == 0):
-        return ProductProblem(NO_REVIEWS, "no reviews found on page")
+    if WE_CARE_ABOUT_REVIEW_COUNT:
+        if (not reviews_found):
+            return ProductProblem(NO_REVIEWS, "no reviews found on page")
+        review_count = int(reviews_found.groups()[0])
+        if (review_count == 0):
+            return ProductProblem(NO_REVIEWS, "no reviews found on page")
     rating_found = re.search('"rating":\s*([0-9]*\.[0-9]+|[0-9]+)', page.text)
-    if (rating_found):
+    if (rating_found and reviews_found):
         rating = float(rating_found.groups()[0])
         if (rating < 3):
-            return ProductProblem(LOW_RATING, "average rating only %f" % rating)
-    if (review_count < 15):
-        return ProductProblem(FEW_REVIEWS, "only %d reviews found on page" % review_count)
+            return ProductProblem(LOW_RATING, "average rating only %.2f" % rating)
+    if WE_CARE_ABOUT_REVIEW_COUNT:
+        if (review_count < 15):
+            return ProductProblem(FEW_REVIEWS, "only %d reviews found on page" % review_count)
     # 4. if we are here, we failed to find that specific SKU on the page
     if (not sku_found):
         return ProductProblem(CONFIG_ERROR, "SEO droplet has no availability information for this skuId")
@@ -172,13 +181,15 @@ def ulta_problem_finder(url, config):
     if (average_rating_found):
         average_rating = float(average_rating_found.groups()[0])
     else:
-        return ProductProblem(CONFIG_ERROR, "cannot find the average rating of the product")    
-    if (review_count == 0):
-        return ProductProblem(NO_REVIEWS, "no reviews")
-    if (average_rating < 3):
-        return ProductProblem(LOW_RATING, "average rating only %f" % average_rating)
-    if (review_count < 15):
-        return ProductProblem(FEW_REVIEWS, "only %d reviews" % review_count)
+        return ProductProblem(CONFIG_ERROR, "cannot find the average rating of the product")
+    if WE_CARE_ABOUT_REVIEW_COUNT:
+        if (review_count == 0):
+            return ProductProblem(NO_REVIEWS, "no reviews")
+    if (0 < review_count) and (average_rating < 3):
+        return ProductProblem(LOW_RATING, "average rating only %.2f" % average_rating)
+    if WE_CARE_ABOUT_REVIEW_COUNT:
+        if (review_count < 15):
+            return ProductProblem(FEW_REVIEWS, "only %d reviews" % review_count)
 
     # 3. if problems not found, everything is good!
     return None
@@ -199,6 +210,8 @@ def bloomingdales_problem_finder(url, config):
     #    'X-Macys-Webservice-Client-Id': 'ubmqtbg8k3kmwuszkcv2ng5z'\
     }
     page = requests.get(url, headers=headers)
+    if ("hoose your items" in page.text):
+        return ProductProblem(CONFIG_ERROR, "this link is for a collection, but not for specific product")
     for block in page.text.split("</script"):
         if "<script" not in block:
             continue
@@ -211,7 +224,7 @@ def bloomingdales_problem_finder(url, config):
         # and this blob of json must have a "product" entry
         product_entry = availability_data["product"]
         if "sizeColorTypeByUPC" not in product_entry:
-            return ProductProblem(CONFIG_ERROR, "availability information by UPC not found")
+            return ProductProblem(STOCKOUT, "most likely, product not available (availability information not on page)")
         upcs_not_available = []
         some_upcs_are_available = False
         availability_by_upc = product_entry["sizeColorTypeByUPC"]
@@ -237,12 +250,14 @@ def bloomingdales_problem_finder(url, config):
         if "numberOfReviews" in product_entry:
             number_of_reviews = int(product_entry["numberOfReviews"])
             average_rating = float(product_entry["custRating"])
-        if (0 == number_of_reviews):
-            return ProductProblem(NO_REVIEWS, "no reviews found")
-        if (average_rating < 3):
-            return ProductProblem(LOW_RATING, "average rating only %f" % average_rating)
-        if (15 > number_of_reviews):
-            return ProductProblem(FEW_REVIEWS, "only %d reviews" % number_of_reviews)
+        if WE_CARE_ABOUT_REVIEW_COUNT:
+            if (0 == number_of_reviews):
+                return ProductProblem(NO_REVIEWS, "no reviews found")
+        if (0 < number_of_reviews) and (average_rating < 3):
+            return ProductProblem(LOW_RATING, "average rating only %.2f" % average_rating)
+        if WE_CARE_ABOUT_REVIEW_COUNT:
+            if (15 > number_of_reviews):
+                return ProductProblem(FEW_REVIEWS, "only %d reviews" % number_of_reviews)
         # if we are here, the product looks good
         return None
 
@@ -283,15 +298,17 @@ def nordstrom_problem_finder(url, config):
         if ('reviewsCount' not in product_info):
             return ProductProblem(CONFIG_ERROR, "review count information not found")
         review_count = product_info['reviewsCount']
-        if (review_count == 0):
-            return ProductProblem(NO_REVIEWS, "no reviews")
-        if ('averageRating' not in product_info):
+        if WE_CARE_ABOUT_REVIEW_COUNT:
+            if (review_count == 0):
+                return ProductProblem(NO_REVIEWS, "no reviews")
+        if (review_count) and ('averageRating' not in product_info):
             return ProductProblem(CONFIG_ERROR, "average rating information not found")
         average_rating = product_info['averageRating']
-        if (average_rating < 3):
-            return ProductProblem(LOW_RATING, "average rating only %f" % average_rating)
-        if (review_count < 15):
-            return ProductProblem(FEW_REVIEWS, "only %d reviews" % review_count)
+        if (review_count) and (average_rating < 3):
+            return ProductProblem(LOW_RATING, "average rating only %.2f" % average_rating)
+        if WE_CARE_ABOUT_REVIEW_COUNT:
+            if (review_count < 15):
+                return ProductProblem(FEW_REVIEWS, "only %d reviews" % review_count)
     except:
         return ProductProblem(CONFIG_ERROR, "problems loading digital data in json")
     # 3. if problems not found, everything is good!
