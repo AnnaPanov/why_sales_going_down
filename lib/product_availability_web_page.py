@@ -73,6 +73,14 @@ _retailer_logos = {
     "bloomingdales" : 'https://static.couponfollow.com/bloomingdales-com/logo.jpg',
     "bloomingdale's" : 'https://static.couponfollow.com/bloomingdales-com/logo.jpg',
     "nordstrom" : 'https://media.glassdoor.com/sqll/1704/nordstrom-squarelogo-1382998996505.png',
+    "bon-ton" : 'http://vignette2.wikia.nocookie.net/logopedia/images/5/51/The_Bon-Ton_logo.jpg/revision/latest?cb=20120420111734',
+    "bonton" : 'http://vignette2.wikia.nocookie.net/logopedia/images/5/51/The_Bon-Ton_logo.jpg/revision/latest?cb=20120420111734',
+    "bon ton" : 'http://vignette2.wikia.nocookie.net/logopedia/images/5/51/The_Bon-Ton_logo.jpg/revision/latest?cb=20120420111734',
+    "belk" : 'https://upload.wikimedia.org/wikipedia/en/8/8c/Belk_logo_2010.svg',
+    "neiman-marcus" : 'https://media.glassdoor.com/sqll/471/neiman-marcus-squarelogo.png',
+    "neiman marcus" : 'https://media.glassdoor.com/sqll/471/neiman-marcus-squarelogo.png',
+    "neimanmarcus" : 'https://media.glassdoor.com/sqll/471/neiman-marcus-squarelogo.png',
+    "sephora.ca" : 'http://www.sephora.com/contentimages/canada/2017_Canada_Day/SITE/2017-06-07-canada-day-global-meganav-button-handoff-slice.gif',
 }
 
 def listing_row(link, retailer, brand, family, title, problem_class, problem, problem_detail, date_time, addressed, reopened):

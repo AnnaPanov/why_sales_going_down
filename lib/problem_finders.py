@@ -72,7 +72,7 @@ def macys_problem_finder(url, config):
     if (rating_found and review_count_found):
         try:
             rating = float(rating_found.groups()[0])
-            if (rating < 3):
+            if (rating < 4):
                 return ProductProblem(LOW_RATING, "average rating only %.2f" % rating)
         except:
             logging.error("failed parse rating for '%s': %s" % (url, str(sys.exc_info())))
@@ -137,7 +137,7 @@ def sephora_problem_finder(url, config):
     rating_found = re.search('"rating":\s*([0-9]*\.[0-9]+|[0-9]+)', page.text)
     if (rating_found and reviews_found):
         rating = float(rating_found.groups()[0])
-        if (rating < 3):
+        if (rating < 4):
             return ProductProblem(LOW_RATING, "average rating only %.2f" % rating)
     if WE_CARE_ABOUT_REVIEW_COUNT:
         if (review_count < 15):
@@ -148,6 +148,90 @@ def sephora_problem_finder(url, config):
     else:
         return None # no problem
 _problem_finders["sephora"] = sephora_problem_finder
+
+'''
+Bonton
+'''
+def bonton_problem_finder(url, config):
+    # 1. load the product page
+    page = _load_product_page(url, config)
+    # 2. find the availability and review information
+    availability = re.search('<input.*="itemAvailability" value="([^"]+)"', page.text)
+    if not availability:
+        return ProductProblem(PRODUCT_NOT_ON_PAGE, 'page text does not contain availability information')
+    availability = availability.groups()[0]
+    if ("WEB" not in availability):
+        return ProductProblem(STOCKOUT, 'not available for online purchases')
+    review_count = 0
+    average_rating = 5
+    review_data = re.search('<div .*data-rating="([0-9]*\.[0-9]+|[0-9]+)" data-reviewcount="(\d+)"', page.text)
+    if review_data:
+        average_rating = float(review_data.groups()[0])
+        review_count = int(review_data.groups()[1])
+    if WE_CARE_ABOUT_REVIEW_COUNT:
+        if (review_count == 0):
+            return ProductProblem(NO_REVIEWS, "no reviews found on page")
+    if (0 < review_count) and (average_rating < 4):
+        return ProductProblem(LOW_RATING, "average rating only %.2f" % average_rating)
+    if WE_CARE_ABOUT_REVIEW_COUNT:
+        if (review_count < 15):
+            return ProductProblem(FEW_REVIEWS, "only %d reviews found on page" % review_count)
+    # 3. if we are here, all is good with this listing
+    return None
+_problem_finders["bon-ton"] = bonton_problem_finder
+_problem_finders["bon ton"] = bonton_problem_finder
+_problem_finders["bonton"] = bonton_problem_finder
+
+    
+'''
+Belk
+'''
+def belk_problem_finder(url, config):
+    # 1. load the product page
+    page = _load_product_page(url, config)
+    # 2. find the availability and review information
+
+    #upc = re.search('>UPC:\s*(\d+)<', page.text)
+    #if not upc:
+    #    logging.info('page text does not contain a UPC code')
+    #    return ProductProblem(CONFIG_ERROR, 'page text does not contain a UPC code')
+    #upc = upc.groups()[0]
+
+    availability = re.search('<link\s*itemprop="availability"\s*href="([^"]+)"', page.text)    
+    if not availability:
+        return ProductProblem(PRODUCT_NOT_ON_PAGE, 'page text does not contain availability information')
+    availability = availability.groups()[0]
+    if ('InStock' in availability) or ('OnlineOnly' in availability) or ('PreOrder' in availability) or ('LimitedAvailability' in availability):
+        logging.info('found "%s" in availability for this SKU' % availability)
+    else:
+        stockout_type = availability.split('/')[-1]
+        return ProductProblem(STOCKOUT, stockout_type)
+    low_availability = re.search('<div[^>]*class="stock-product"[^>]*>([^<]+)<', page.text)
+    if (low_availability):
+        return ProductProblem(ALMOST_STOCKOUT, low_availability.groups()[0])
+
+    average_rating = re.search('<span.*itemprop="ratingValue">([0-9]*\.[0-9]+|[0-9]+)</span>', page.text)
+    if not average_rating:
+        return ProductProblem(CONFIG_ERROR, 'page text does not contain rating information')
+    average_rating = float(average_rating.groups()[0])
+
+    review_count = re.search('<span.*itemprop="reviewCount">(\d+)</span>', page.text)
+    if not review_count:
+        return ProductProblem(CONFIG_ERROR, 'page text does not contain rating information')
+    review_count = int(review_count.groups()[0])
+
+    if WE_CARE_ABOUT_REVIEW_COUNT:
+        if (review_count == 0):
+            return ProductProblem(NO_REVIEWS, "no reviews found on page")
+    if (average_rating < 4):
+        return ProductProblem(LOW_RATING, "average rating only %.2f" % average_rating)
+    if WE_CARE_ABOUT_REVIEW_COUNT:
+        if (review_count < 15):
+            return ProductProblem(FEW_REVIEWS, "only %d reviews found on page" % review_count)
+
+    # if we are here, the listing is good
+    return None # no problem
+_problem_finders["belk"] = belk_problem_finder
 
 
 
@@ -185,7 +269,7 @@ def ulta_problem_finder(url, config):
     if WE_CARE_ABOUT_REVIEW_COUNT:
         if (review_count == 0):
             return ProductProblem(NO_REVIEWS, "no reviews")
-    if (0 < review_count) and (average_rating < 3):
+    if (0 < review_count) and (average_rating < 4):
         return ProductProblem(LOW_RATING, "average rating only %.2f" % average_rating)
     if WE_CARE_ABOUT_REVIEW_COUNT:
         if (review_count < 15):
@@ -253,7 +337,7 @@ def bloomingdales_problem_finder(url, config):
         if WE_CARE_ABOUT_REVIEW_COUNT:
             if (0 == number_of_reviews):
                 return ProductProblem(NO_REVIEWS, "no reviews found")
-        if (0 < number_of_reviews) and (average_rating < 3):
+        if (0 < number_of_reviews) and (average_rating < 4):
             return ProductProblem(LOW_RATING, "average rating only %.2f" % average_rating)
         if WE_CARE_ABOUT_REVIEW_COUNT:
             if (15 > number_of_reviews):
@@ -304,7 +388,7 @@ def nordstrom_problem_finder(url, config):
         if (review_count) and ('averageRating' not in product_info):
             return ProductProblem(CONFIG_ERROR, "average rating information not found")
         average_rating = product_info['averageRating']
-        if (review_count) and (average_rating < 3):
+        if (review_count) and (average_rating < 4):
             return ProductProblem(LOW_RATING, "average rating only %.2f" % average_rating)
         if WE_CARE_ABOUT_REVIEW_COUNT:
             if (review_count < 15):
