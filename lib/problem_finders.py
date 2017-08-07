@@ -209,17 +209,16 @@ def belk_problem_finder(url, config):
     low_availability = re.search('<div[^>]*class="stock-product"[^>]*>([^<]+)<', page.text)
     if (low_availability):
         return ProductProblem(ALMOST_STOCKOUT, low_availability.groups()[0])
-
-    average_rating = re.search('<span.*itemprop="ratingValue">([0-9]*\.[0-9]+|[0-9]+)</span>', page.text)
-    if not average_rating:
-        return ProductProblem(CONFIG_ERROR, 'page text does not contain rating information')
-    average_rating = float(average_rating.groups()[0])
-
     review_count = re.search('<span.*itemprop="reviewCount">(\d+)</span>', page.text)
     if not review_count:
-        return ProductProblem(CONFIG_ERROR, 'page text does not contain rating information')
-    review_count = int(review_count.groups()[0])
-
+        review_count = 0
+        average_rating = 5.0
+    else:
+        review_count = int(review_count.groups()[0])
+        average_rating = re.search('<span.*itemprop="ratingValue">([0-9]*\.[0-9]+|[0-9]+)</span>', page.text)
+        if not average_rating:
+            ProductProblem(CONFIG_ERROR, "page has reviews, but does not have average rating")
+        average_rating = float(average_rating.groups()[0])
     if WE_CARE_ABOUT_REVIEW_COUNT:
         if (review_count == 0):
             return ProductProblem(NO_REVIEWS, "no reviews found on page")
@@ -233,6 +232,32 @@ def belk_problem_finder(url, config):
     return None # no problem
 _problem_finders["belk"] = belk_problem_finder
 
+
+'''
+Neiman
+'''
+def neiman_problem_finder(url, config):
+    # 1. load the product page
+    page = _load_product_page(url, config)
+
+    # 2. find the availability and review information
+    availability = re.search("product_inventory_status.*:.*\[([^\]]+)\]", page.text)
+    if not availability:
+        return ProductProblem(CONFIG, "product availability information missing")
+    availability = availability.groups()[0].replace('\\', '')
+    try:
+        availability_list = json.loads('[' + availability + ']')
+        for i in availability_list:
+            if (i != "Instock" and i != "InStock"):
+                return ProductProblem(STOCKOUT, i)
+    except:
+        return ProductProblem(CONFIG, "errors when parsing availability information: " + availability)
+
+    # 3. since Neiman-Marcus has no ratings or reviews, we are already done
+    return None
+_problem_finders["neiman-marcus"] = neiman_problem_finder
+_problem_finders["neiman marcus"] = neiman_problem_finder
+_problem_finders["neimanmarcus"] = neiman_problem_finder
 
 
 '''

@@ -51,7 +51,7 @@ $(document).on("change","input[type=radio]",function(){
 
 _problem_class_to_nickname = {
     'competitive' : 'good',
-    'configuration' : 'not set',
+    'configuration' : 'not setup',
     'availability' : 'not there',
     'reviews' : 'problems with reviews',
     #'assets' : 'wrong assets',
