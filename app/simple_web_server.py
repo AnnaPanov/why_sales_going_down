@@ -39,11 +39,11 @@ class S(BaseHTTPRequestHandler):
                 S.listing_appearance.load_latest()
                 S.listing_status.load_latest()
             parsed_path = up.urlparse(self.path)
-            if ("/download" in parsed_path.path) and (S.listing_appearance.file_name):
-                self.respond_with_file(S.listing_appearance.file_name, "text/csv")
-                return
             parsed_query = up.parse_qs(parsed_path.query)
             retailer = parsed_query.get("retailer", [None])[0]
+            if ("/download" in parsed_path.path) and (S.listing_appearance.file_name):
+                self.respond_with_file(S.listing_appearance.file_name, "text/csv", retailer)
+                return
             result = pa_page.availability_report(S.listings, S.listing_appearance, S.listing_status, self.username(), retailer)
             self._set_headers()
             self.wfile.write(''.join(result).encode('utf-8'))
@@ -97,16 +97,22 @@ class S(BaseHTTPRequestHandler):
         self.wfile.write(('<html><head><meta http-equiv="refresh" content="0;url='\
                               + redirect_url + '"></head></html>').encode('utf-8'))
 
-    def respond_with_file(self, file_name, content_type):
+    def respond_with_file(self, file_name, content_type, retailer):
+        if (retailer == "all"): retailer = None
         with open(file_name) as f:
             download_filename = file_name.split('/')[-1].split('\\')[-1]
+            if (retailer): download_filename = retailer + "_" + download_filename
+            valid_chars = '-_.() abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+            download_filename = ''.join(c for c in download_filename if c in valid_chars)
             self.send_response(200)
             self.send_header('Content-type', content_type)
             self.send_header("Content-Disposition", "attachment; filename=\"" + download_filename +"\"")
             self.end_headers()
-            self.wfile.write(f.read().encode('utf-8'))
-            f.close()
-            return
+            first_line = True
+            for line in f.readlines():                
+                if (retailer is None) or first_line or (retailer in line):
+                    self.wfile.write(line.encode('utf-8'))
+                first_line = False                    
         
 def run(server_class=HTTPServer, handler_class=S, port=80):
     server_address = ('', port)

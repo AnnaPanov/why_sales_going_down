@@ -1,6 +1,7 @@
 import product_availability as pa
 import product_config as pc
 import datetime as dt
+import urllib.parse
 
 def availability_report(product_config, listing_appearance, listing_status, username, retailer):
     result = []
@@ -14,6 +15,8 @@ def availability_report(product_config, listing_appearance, listing_status, user
     result.append('</body></html>')
     return ''.join(result)
 
+def download_link(retailer):
+    return ' <a href="/download?retailer=' + urllib.parse.quote_plus(retailer) + '"><span class="summary"><i class="btn-sm glyphicon glyphicon-download-alt"></i>' + retailer + '</span></a>'
 
 def retailer_selector(distinct_retailers, retailer):
     selected_retailer = None
@@ -29,7 +32,7 @@ def retailer_selector(distinct_retailers, retailer):
 ''' + ''.join(('''
   <label class="btn''' + (" active" if retailer == selected_retailer else "") + '''">
     <input type="radio" value="''' + retailer + '''" name="retailer" ''' + ('checked' if retailer == selected_retailer else '') +\
-'''> <i class="fa fa-circle-o fa-2x"></i><i class="fa fa-dot-circle-o fa-2x"></i> <span>''' + retailer +  '''</span>
+'''> <i class="fa fa-circle-o fa-2x"></i><i class="fa fa-dot-circle-o fa-2x"></i> <span>''' + retailer + '''</span>
   </label>''') for retailer in choices) + '''
 </div>
 <script>
@@ -209,8 +212,11 @@ def data_table(appearance_data, distinct_retailers, username, retailer):
 						</div>
 					</div>
 				</div>
+''')
+    result.append('Downloads:<br>' + '<br>'.join(download_link(retailer) for retailer in distinct_retailers))
+    result.append('''				
 			</div>
-		</section>		
+		</section>
 	</div>
 </div>
 <script>
