@@ -148,6 +148,7 @@ def sephora_problem_finder(url, config):
     else:
         return None # no problem
 _problem_finders["sephora"] = sephora_problem_finder
+_problem_finders["sephora ca"] = sephora_problem_finder
 
 '''
 Bonton
@@ -234,6 +235,48 @@ _problem_finders["belk"] = belk_problem_finder
 
 
 '''
+Boscovs
+'''
+def boscovs_problem_finder(url, config):
+    # 1. load the product page
+    page = _load_product_page(url, config)
+    # 2. find the availability and review information
+    availability_problem = re.search('itemprop="availability"([^>]+)>', page.text)    
+    if availability_problem:
+        availability_detail = availability_problem.groups()[0]
+        if ("InStock" not in availability_detail) and ("nstock" not in availability_detail):
+            return ProductProblem(STOCKOUT, 'no sure, but most likely out of stock')
+    add_to_cart_button = re.search('<img[^>]+addToCartButton[^>]+>', page.text)
+    if (not add_to_cart_button):
+        return ProductProblem(CONFIG_ERROR, 'page does not have an "add to cart" button')
+    add_to_cart_button = add_to_cart_button.group()
+    if ("disabled" in add_to_cart_button) or ("Disabled" in add_to_cart_button):
+        return ProductProblem(STOCKOUT, '"add to cart" button is disabled')
+    review_count = re.search('<[^>]+itemprop="reviewCount"[^>]*>(\d+)<', page.text)
+    if not review_count:
+        review_count = 0
+        average_rating = 5.0
+    else:
+        review_count = int(review_count.groups()[0])
+        average_rating = re.search('<[^>]+itemprop="ratingValue"[^>]*>([0-9]*\.[0-9]+|[0-9]+)</span>', page.text)
+        if not average_rating:
+            ProductProblem(CONFIG_ERROR, "page has reviews, but does not have average rating")
+        average_rating = float(average_rating.groups()[0])
+    if WE_CARE_ABOUT_REVIEW_COUNT:
+        if (review_count == 0):
+            return ProductProblem(NO_REVIEWS, "no reviews found on page")
+    if (average_rating < 4):
+        return ProductProblem(LOW_RATING, "average rating only %.2f" % average_rating)
+    if WE_CARE_ABOUT_REVIEW_COUNT:
+        if (review_count < 15):
+            return ProductProblem(FEW_REVIEWS, "only %d reviews found on page" % review_count)
+
+    # if we are here, the listing is good
+    return None # no problem
+_problem_finders["boscovs"] = boscovs_problem_finder
+
+
+'''
 Neiman
 '''
 def neiman_problem_finder(url, config):
@@ -243,7 +286,7 @@ def neiman_problem_finder(url, config):
     # 2. find the availability and review information
     availability = re.search("product_inventory_status.*:.*\[([^\]]+)\]", page.text)
     if not availability:
-        return ProductProblem(CONFIG, "product availability information missing")
+        return ProductProblem(CONFIG_ERROR, "product availability information missing")
     availability = availability.groups()[0].replace('\\', '')
     try:
         availability_list = json.loads('[' + availability + ']')
@@ -251,7 +294,7 @@ def neiman_problem_finder(url, config):
             if (i != "Instock" and i != "InStock"):
                 return ProductProblem(STOCKOUT, i)
     except:
-        return ProductProblem(CONFIG, "errors when parsing availability information: " + availability)
+        return ProductProblem(CONFIG_ERROR, "errors when parsing availability information: " + availability)
 
     # 3. since Neiman-Marcus has no ratings or reviews, we are already done
     return None
@@ -425,6 +468,124 @@ def nordstrom_problem_finder(url, config):
 _problem_finders["nordstrom"] = nordstrom_problem_finder
 
 
+'''
+Dillards
+'''
+def dillards_problem_finder(url, config):
+    # 1. load the product page
+    page = _load_product_page(url, config)
+    # 2. find availability information and all
+    availability_info = _find_script_containing(page.text, "@type")
+    if not availability_info:
+        return ProductProblem(CONFIG_ERROR, "page does not contain a product information JSON blob")
+    for availability in re.findall('"availability"\s*:\s*"([^"]+)"', availability_info):
+        if ('InStock' not in availability) and ('OnlineOnly' not in availability):
+            availability = availability.split('/')[-1]
+            if (availability == 'LimitedAvailability'):
+                return ProductProblem(ALMOST_STOCKOUT, "only a few left")
+            return ProductProblem(STOCKOUT, "for one of the SKUs availability is '" + availability + "'")
+    # 3. ok, availability is not an issue, so let's see if the reviews are a problem
+    average_rating = re.search('"ratingValue"\s*:\s*"([0-9]*\.[0-9]+|[0-9]+)"', page.text)
+    average_rating = float(average_rating.groups()[0]) if average_rating else 5.0
+    review_count = re.search('"reviewCount"\s*:\s*"(\d+)"', page.text)
+    review_count = int(review_count.groups()[0]) if review_count else 0
+    return _is_it_a_review_problem(review_count, average_rating)
+_problem_finders["dillards"] = dillards_problem_finder
+
+
+'''
+Von Maur
+'''
+def volmaur_problem_finder(url, config):
+    # 1. load the product page
+    page = _load_product_page(url, config)
+    availability_error_box = re.search('id="diverr"\s*>([^<]*)<', page.text)
+    if not availability_error_box:
+        return ProductProblem(CONFIG_ERROR, "availability information box is not found on page")
+    availability_error = availability_error_box.groups()[0]
+    if (availability_error != ""):
+        return ProductProblem(STOCKOUT, availability_error)
+    review_count = re.search('itemprop="reviewCount">(\d+)<', page.text)
+    if not review_count:
+        review_count = 0
+        average_rating = 5.0
+    else:
+        review_count = int(review_count.groups()[0])
+        average_rating = re.search('itemprop="ratingValue">([0-9]*\.[0-9]+|[0-9]+)<', page.text)
+        if not average_rating:
+            ProductProblem(CONFIG_ERROR, "page has reviews, but does not have average rating")
+        average_rating = float(average_rating.groups()[0])
+    return _is_it_a_review_problem(review_count, average_rating)
+_problem_finders["vonmaur"] = volmaur_problem_finder
+_problem_finders["von maur"] = volmaur_problem_finder
+
+
+'''
+JC Penney
+'''
+def jcpenney_problem_finder(url, config):
+    url = url.split('&')[0]
+    # 1. load the page
+    page = _load_product_page(url, config)
+    # 2. load availability from jcpenney API
+    sku = re.search('/([^/?]+)\?', url)
+    if (not sku):
+        sku = re.search('/([^/?]+)$', url)
+        if (not sku):
+            return ProductProblem(CONFIG_ERROR, "url does not have a '/blahblah?' in it, so I cannot determine the SKU")
+    sku = sku.groups()[0]
+    inventory_url = "http://www.jcpenney.com/v1/product-aggregator/%s/inventory" % sku
+    inventory_response = requests.get(inventory_url)
+    if (inventory_response.text.strip() == ""):
+        return ProductProblem(STOCKOUT, "item cannot be added to bag")
+    try:
+        inventory_response = json.loads(inventory_response.text)
+        for inventory_state in inventory_response:
+            if ('atp' not in inventory_state):
+                return ProductProblem(CONFIG_ERROR, "one of the items doesn't have 'atp' in " + inventory_response)
+            if ('id' not in inventory_state):
+                return ProductProblem(CONFIG_ERROR, "one of the items doesn't have 'id' in " + inventory_response)
+            available_to_purchase = inventory_state['atp']
+            if not available_to_purchase:
+                return ProductProblem(STOCKOUT, "UPC=%s is out of stock at %s" % (str(inventory_state['id']), inventory_url))
+    except:
+        return ProductProblem(CONFIG_ERROR, "garbled inventory response from " + inventory_url)
+    # 3. check the reviews
+    review_info = _find_script_containing(page.text, '"reviewCount"\s*:\s*(\d+)')
+    if not review_info:
+        review_count = 0
+        average_rating = 5
+    else:
+        review_count = re.search('"reviewCount"\s*:\s*"?(\d+)', page.text)
+        review_count = int(review_count.groups()[0]) if review_count else 0
+        average_rating = re.search('"ratingValue"\s*:\s*"?([0-9]*\.[0-9]+|[0-9]+)', page.text)
+        average_rating = float(average_rating.groups()[0]) if average_rating else 5.0
+    return _is_it_a_review_problem(review_count, average_rating)
+    # 4. data in jcpenney format (more correct)
+    #jcp_availability_info = _find_script_containing(page.text, 'productJSON\s*=')    
+_problem_finders["jcpenney"] = jcpenney_problem_finder
+_problem_finders["jc penney"] = jcpenney_problem_finder
+_problem_finders["jc penney/sephora"] = jcpenney_problem_finder
+_problem_finders["jc penney/ sephora"] = jcpenney_problem_finder
+
+
+def lord_and_taylor_problem_finder(url, config):
+    # 1. load the page
+    page = _load_product_page(url, config)
+    # 2. check the availability
+    if ("product__limited-inventory" in page.text):
+        return ProductProblem(ALMOST_STOCKOUT, "limited inventory left")
+    availability = re.search('itemprop="availability"[^>]+>([^<]+)<', page.text)
+    if not availability:
+        return ProductProblem(CONFIG_ERROR, "availability information not found on page")
+    availability = availability.groups()[0]
+    if ('InStock' not in availability) and ('OnlineOnly' not in availability) and ('In Stock' not in availability) and ('Online Only' not in availability):
+        return ProductProblem(STOCKOUT, availability.split('/')[-1])
+    # 3. lord&taylor doesn't provide reviews, so we are done here
+    return None
+_problem_finders["lord&taylor"] = lord_and_taylor_problem_finder
+    
+
 
 '''
 utilities
@@ -456,6 +617,30 @@ def _load_product_page(url, config):
                                                          "are you sure it is the right product? page title does not contain %s='%s' (instead, the title is: %s)"\
                                                          % (product_config.FIELD_EXPECTED_TITLE, expected_title, title)))
     return response
+
+
+def _find_script_containing(text, substring):
+    expression = re.compile(substring)
+    for block in text.split("</script"):
+        if "<script" not in block:
+            continue
+        script = ">".join((block.split("<script")[-1].split(">")[1:]))
+        script = script.strip()
+        if expression.search(script):
+            return script
+    return None
+
+
+def _is_it_a_review_problem(review_count, average_rating):
+    if WE_CARE_ABOUT_REVIEW_COUNT:
+        if (review_count == 0):
+            return ProductProblem(NO_REVIEWS, "no reviews")
+    if (0 < review_count) and (average_rating < 4):
+        return ProductProblem(LOW_RATING, "average rating only %.2f" % average_rating)
+    if WE_CARE_ABOUT_REVIEW_COUNT:
+        if (review_count < 15):
+            return ProductProblem(FEW_REVIEWS, "only %d reviews" % review_count)
+    return None
 
 
 class LoadFile:

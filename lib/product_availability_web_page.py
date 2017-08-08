@@ -64,8 +64,10 @@ _problem_class_to_button_type = {
 _retailer_logos = {
     "macy's" : 'https://vignette1.wikia.nocookie.net/logopedia/images/b/b8/Macy%27s_Vertical_Logo.svg',
     "macys" : 'https://vignette1.wikia.nocookie.net/logopedia/images/b/b8/Macy%27s_Vertical_Logo.svg',
-    "ulta" : 'https://logosave.com/images/large/common/02/ulta-beauty.png',
+    "ulta" : 'https://www.brandsoftheworld.com/sites/default/files/styles/logo-thumbnail/public/082013/ulta-logo.png',
     "sephora" : 'http://www.parquecomercial-lacanada.com/sites/parquecomercial-lacanada.com/files/field/operador-logo/sephora_-_logo.jpg',
+    "sephora ca" : 'http://www.freepngimg.com/download/maple_leaf/3-2-canada-leaf-free-png-image.png',
+    "dillards" : 'http://logos-download.com/wp-content/uploads/2016/11/Dillards_logo_small.png',    
     "bloomingdales" : 'https://static.couponfollow.com/bloomingdales-com/logo.jpg',
     "bloomingdale's" : 'https://static.couponfollow.com/bloomingdales-com/logo.jpg',
     "nordstrom" : 'https://media.glassdoor.com/sqll/1704/nordstrom-squarelogo-1382998996505.png',
@@ -76,7 +78,10 @@ _retailer_logos = {
     "neiman-marcus" : 'https://media.glassdoor.com/sqll/471/neiman-marcus-squarelogo.png',
     "neiman marcus" : 'https://media.glassdoor.com/sqll/471/neiman-marcus-squarelogo.png',
     "neimanmarcus" : 'https://media.glassdoor.com/sqll/471/neiman-marcus-squarelogo.png',
-    "sephora.ca" : 'http://www.sephora.com/contentimages/canada/2017_Canada_Day/SITE/2017-06-07-canada-day-global-meganav-button-handoff-slice.gif',
+    "lord&taylor" : 'https://vignette3.wikia.nocookie.net/logopedia/images/9/92/Lord_and_Taylor.svg/revision/latest/scale-to-width-down/250?cb=20130610041547',
+    "boscovs" : 'https://locations.boscovs.com/images/default_bio.png',
+    "jc penney" : 'https://vignette2.wikia.nocookie.net/monsterhigh/images/3/31/Logo_-_JCPenney.jpg/revision/latest?cb=20121012161449',
+    "jc penney/ sephora" : 'https://vignette2.wikia.nocookie.net/monsterhigh/images/3/31/Logo_-_JCPenney.jpg/revision/latest?cb=20121012161449',
 }
 
 def listing_row(link, retailer, brand, family, title, problem_class, problem, problem_detail, date_time, addressed, reopened):
@@ -86,7 +91,7 @@ def listing_row(link, retailer, brand, family, title, problem_class, problem, pr
     if (not problem_class) or ('' == problem_class): problem_class = 'competitive'
     data_status = problem_class if not addressed else 'addressed'
     problem_class_nickname = _problem_class_to_nickname.get(problem_class, problem_class)
-    retailer_logo_url = _retailer_logos.get(retailer.lower(), 'http://www.publicdomainpictures.net/pictures/40000/velka/question-mark.jpg')
+    retailer_logo_url = _retailer_logos.get(retailer.lower(), 'http://www.free-icons-download.net/images/question-mark-logo-icon-76440.png')
     result = []
     result.append('''
 									<tr data-status="''' + data_status + '"' + additional_css + '''>
@@ -383,7 +388,7 @@ label input[type="radio"]:checked ~ i.fa.fa-dot-circle-o{
     color: #7AA3CC;    display: inline;
 }
 label:hover input[type="radio"] ~ i.fa {
-color: #7AA3CC;
+    color: #7AA3CC;
 }
 
 label input[type="checkbox"] ~ i.fa.fa-square-o{
@@ -399,7 +404,7 @@ label input[type="checkbox"]:checked ~ i.fa.fa-check-square-o{
     color: #7AA3CC;    display: inline;
 }
 label:hover input[type="checkbox"] ~ i.fa {
-color: #7AA3CC;
+    color: #7AA3CC;
 }
 
 div[data-toggle="buttons"] label.active{
