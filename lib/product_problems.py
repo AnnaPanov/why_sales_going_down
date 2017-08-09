@@ -21,12 +21,14 @@ NO_PROBLEM = ("", "no problem", 0)
 
 # what a problem description looks like
 class ProductProblem:
-    def __init__(self, text_class_severity, detail):
+    def __init__(self, text_class_severity, detail, item_id = None):
         assert(len(text_class_severity) == 3)
         self.problem = text_class_severity[0]
         self.problem_class = text_class_severity[1]
         self.problem_severity = text_class_severity[2]
         self.problem_detail = detail
+        self.item_id = item_id or ""
+            
 
     def __str__(self):
         return "%s-%d : '%s'" % (self.problem_class, self.problem_severity, self.problem)
