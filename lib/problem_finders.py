@@ -396,10 +396,12 @@ def bloomingdales_problem_finder(url, config):
             hide_low_availability = product_entry["attributes"].get("HIDE_LOW_AVAILABILITY_MESSAGE","")
             if (1 == len(hide_low_availability)) and (hide_low_availability[0] == 'N'):
                 low_availability = True
+        web_id = _group0(re.search("[&?;]ID=(\d+)", url))
+        web_id = ("web_id: " + str(web_id)) if web_id else ""
         if (0 != len(upcs_not_available)):
-            return ProductProblem(STOCKOUT, "some UPCs are not in stock (" + ", ".join(upcs_not_available) + ")")
+            return ProductProblem(STOCKOUT, "some UPCs are not in stock (" + ", ".join(upcs_not_available) + ")", "upc: [" + ', '.join(upcs_not_available) + "], " + web_id)
         if (low_availability):
-            return ProductProblem(ALMOST_STOCKOUT, "some UPCs almost sold out")
+            return ProductProblem(ALMOST_STOCKOUT, "some UPCs almost sold out", web_id)
         number_of_reviews = 0
         average_rating = None
         if "numberOfReviews" in product_entry:
@@ -449,7 +451,8 @@ def nordstrom_problem_finder(url, config):
             return ProductProblem(CONFIG_ERROR, "product availability information not found")
         is_available = product_info['isAvailable']
         if (not is_available):
-            return ProductProblem(STOCKOUT, "product not available")
+            item_id = "item: " + str(product_info.get('styleNumber', 'UNKNOWN')) + ", productID: " + str(product_info.get('productID', 'UNKNOWN'))
+            return ProductProblem(STOCKOUT, "product not available", item_id)
         if ('reviewsCount' not in product_info):
             return ProductProblem(CONFIG_ERROR, "review count information not found")
         review_count = product_info['reviewsCount']
@@ -589,6 +592,193 @@ def lord_and_taylor_problem_finder(url, config):
 _problem_finders["lord&taylor"] = lord_and_taylor_problem_finder
     
 
+def sdm_bb_problem_finder(url, config):
+    # 1. load the page
+    page = _load_product_page(url, config)
+    # 2. check the availability
+    sku = _group0(re.search('"productSKU"\s*:\s*\(?"?(\d+)', page.text)) or _group0(re.search('[&;\?]variantCode=(\d+)', url))
+    if not sku:
+        return ProductProblem(CONFIG_ERROR, "cannot find product sku on the page or in the link")
+    out_of_stock = _group0(re.search('"outofStock"\s*:\s*\(?"?(\w+)', page.text))
+    if out_of_stock.lower() == "true":
+        return ProductProblem(STOCKOUT, "out of stock", "sku: " + sku)
+    # 3. check the reviews
+    ratings = []
+    for ratingValue in re.findall('itemprop="?ratingValue"?\s*>(\d+)<', page.text):
+        ratings.append(float(ratingValue))
+    review_count = len(ratings)
+    average_rating = sum(ratings)/len(ratings) if 0 < len(ratings) else 5.0
+    if (3.8 < average_rating) and (average_rating < 4.0): average_rating = 4.0 # because they only display it graphically at SDM
+    return _is_it_a_review_problem(review_count, average_rating)
+_problem_finders["sdm - bb"] = sdm_bb_problem_finder
+
+
+def jean_contu_problem_finder(url, config):
+    # 1. load the page
+    page = _load_product_page(url, config)
+    item_id = _group0(re.search('class="[^">]*js-upc-code"[^>]+>(\d+)<', page.text))
+    if (item_id):
+        item_id = "upc: " + item_id
+    else:
+        item_id = _group0(re.search('/(\d+)/', url))
+        if not item_id:
+            return ProductProblem(CONFIG_ERROR, "cannot find product UPC or even SKU on the page or in the link")
+        item_id = "sku: " + item_id
+    # 2. check the availability
+    limited_quantity = _group0(re.search('(<div[^>]+class=\"problem[^"]* limited-quantity[^>]+>)', page.text))
+    if limited_quantity and (("hidden" not in limited_quantity) and ("display:none" not in limited_quantity)):
+        return ProductProblem(ALMOST_STOCKOUT, "just a few left", item_id)
+    out_stock = _group0(re.search('(<div[^>]+class=\"problem[^"]* out-stock[^>]+>)', page.text))
+    if out_stock and (("hidden" not in out_stock) and ("display:none" not in out_stock)):
+        return ProductProblem(STOCKOUT, "just a few left", item_id)
+    # 3. no ratings on Jean Contu, so we are done
+    return None
+_problem_finders["jean coutu"] = jean_contu_problem_finder
+
+
+def beauty_brands_problem_finder(url, config):
+    # 1. load the page
+    page = _load_product_page(url, config)
+    # 2. find the availability blob
+    availability_blob = _find_script_containing(page.text, "MarketLive.P2P.buildEnhancedDependentOptionMenuObjects")
+    if not availability_blob:
+        return ProductProblem(CONFIG_ERROR, "page does not have product availability in JSON format")
+    availability_blob = availability_blob.replace("MarketLive.P2P.buildEnhancedDependentOptionMenuObjects", "").strip()
+    if ('(' == availability_blob[0]): availability_blob = availability_blob[1:]
+    if (';' == availability_blob[-1]): availability_blob = availability_blob[0:(len(availability_blob) - 1)]
+    if (')' == availability_blob[-1]): availability_blob = availability_blob[0:(len(availability_blob) - 1)]
+    try:
+        availability_blob = json.loads(availability_blob)
+    except:
+        return ProductProblem(CONFIG_ERROR, "availability information in JSON format seems to be garbled")
+    availability_by_sku = availability_blob.get('aOptionSkus', None)
+    if (not availability_by_sku):
+        return ProductProblem(CONFIG_ERROR, "availability information in JSON does not have 'aOptionSkus'")
+    if (0 == len(availability_by_sku)):
+        return ProductProblem(CONFIG_ERROR, "availability information by SKU is empty")
+    for i in availability_by_sku:
+        availability = availability_by_sku[i]
+        if ('inStock' in availability):
+            if (availability['inStock']):
+                continue # this SKU is in stock
+        sku = availability.get('iSkuPk', None)
+        if not sku:
+            return ProductProblem(CONFIG_ERROR, "one of the items is not in stock, but its SKU is missing")
+        return ProductProblem(STOCKOUT, "not in stock", "sku: " + str(sku))
+    # 3. there are no reviews, so we are done
+    return None    
+_problem_finders["beauty brands"] = beauty_brands_problem_finder
+
+
+
+def ssi_stages_problem_finder(url, config):
+    # 1. load the page
+    page = _load_product_page(url, config)
+    web_id = _group0(re.search(">WEB\s+ID\s*:\s*(\d+)<", page.text))
+    if not web_id:
+        return ProductProblem(CONFIG_ERROR, "cannot find product WEB ID in page text")
+    # 2. check for availability problems
+    out_of_stock_sku = _group0(re.search('out-of-stck[^>]+data-size-id="(\d+)"', page.text))
+    if out_of_stock_sku:
+        return ProductProblem(STOCKOUT, "one of SKUs is out of stock", "sku: " + out_of_stock_sku + ", web_id: " + web_id)
+    if "OUT OF STOCK" in page.text:
+        return ProductProblem(STOCKOUT, "out of stock", "web_id: " + web_id)        
+    # 3. not checking for review problems: is too complicated here, because have to interact with bazaarvoice systems
+    return None
+_problem_finders["ssi stages"] = ssi_stages_problem_finder
+
+
+def hudsons_bay_problem_finder(url, config):
+    # 1. load the page
+    page = _load_product_page(url, config)
+    # 2. find the availability information with UPCs
+    availability_blob = _find_div_containing(page.text, "catentry_id")
+    if not availability_blob:
+        return ProductProblem(CONFIG_ERROR, "cannot find availability information on page")
+    try:
+        availability_blob = json.loads(availability_blob)
+    except:
+        return ProductProblem(CONFIG_ERROR, "availability information on page is garbled")
+    if not isinstance(availability_blob, list):
+        return ProductProblem(CONFIG_ERROR, "availability information on page is not a list")
+    if 0 == len(availability_blob):
+        return ProductProblem(CONFIG_ERROR, "availability information on page is found, but empty")
+    for item in availability_blob:
+        if ('outOfStock' in item) and item['outOfStock']:
+            return ProductProblem(STOCKOUT, "out of stock", "upc: " + (item.get('ItemThumbUPC', None) or ('"none", catalog id: ' + str(item.get('catentry_id', None)))))
+        if ('inventoryStatus' in item) and (item['inventoryStatus'] != "In Stock"):
+            return ProductProblem(STOCKOUT, str(item['inventoryStatus']), "upc: " + (item.get('ItemThumbUPC', None) or ('"none", catalog id: ' + str(item.get('catentry_id', None)))))
+    # 3. ratings and reviews
+    average_rating = _group0(re.search('<span class="pr-rating[^>"]+average"[^>]*>([0-9]*\.[0-9]+|[0-9]+)</span>', page.text)) or '5.0'
+    average_rating = float(average_rating)
+    review_count = _group0(re.search('>(\d+)</span>\s*reviews', page.text)) or '0'
+    review_count = int(review_count)
+    return _is_it_a_review_problem(review_count, average_rating)
+_problem_finders["hudson's bay"] = hudsons_bay_problem_finder
+
+
+def aafes_problem_finder(url, config):
+    # 1. load the page
+    sku = _group0(re.search("/(\d+)\?", url)) or _group0(re.search("/(\d+)$", url))
+    if not sku:
+        return ProductProblem(CONFIG_ERROR, "URL does not contain SKU")
+    page = _load_product_page(url, config)
+    # 2. look for stockouts
+    limited_availability = _group0(re.search("(only\s+[^<]+\s+items?\s+left)", page.text))
+    if (limited_availability):
+        return ProductProblem(ALMOST_STOCKOUT, limited_availability, "sku: " + sku)
+    if ("ut of Stock" in page.text) or ("ut of stock" in page.text):
+        return ProductProblem(STOCKOUT, "out of stock", "sku: " + sku)
+    if ("encountered some technical issues" in page.text):
+        return ProductProblem(STOCKOUT, "technical issues with the product", "sku: " + sku)
+    # 3. reviews are ignored, because they must be loaded from bazaarvoice and it's not straightforward
+    return None
+_problem_finders["AAFES Shopmyexchange".lower()] = aafes_problem_finder
+
+
+def saks_problem_finder(url, config):
+    # 1. when loading the page, pretend that we are a web browser on a mobile device
+    style_code = _group0(re.search("m.saks.com/pd.jsp\?productCode=(\d+)", url))
+    if not style_code:
+        return ProductProblem(CONFIG_ERROR, "Saks product URLs must all look like \"http://m.saks.com/pd.jsp?productCode=XXXX\" (where XXXX is the \"style code\" of the product, which you can find on any Saks product page)")
+    headers = {\
+        'user-agent': 'Availability Checker/0.0.1',\
+    }
+    page = requests.get(url, headers=headers)
+    if page.status_code != 200:
+        raise ProductProblemException(ProductProblem(PAGE_NOT_LOADED, "response code %d" % page.status_code))
+    if not isinstance(page.text, str):
+        raise ProductProblemException(ProductProblem(PAGE_NOT_LOADED, "response text is not a string"))
+    expected_title = config[product_config.FIELD_EXPECTED_TITLE]
+    brand = config[product_config.FIELD_BRAND]
+    if (not re.search("<h1.*" + expected_title + ".*/h1>", page.text)) and (not re.search("<h1.*" + brand + ".*/h1>", page.text)):
+            raise ProductProblemException(ProductProblem(PRODUCT_NOT_ON_PAGE,\
+                                                         "are you sure it is the right product? page title does not contain any headers with '%s' or '%s'"\
+                                                         % (expected_title, brand)))
+    # 2. check availability
+    for availability in re.findall('itemprop="availability"[^>]*>([^<]+)<', page.text):
+        if (availability == 'In Stock'):
+            continue # all is good
+        upc = _group0(re.search('"upc"\s*:\s*"?(\d+)', page.text))
+        prd_id = _group0(re.search('prd_id=(\d+)', page.text))
+        if upc:
+            item_id = "upc: " + upc
+        elif prd_id:
+            item_id = "product_id: " + prd_id
+        else:
+            item_id = "item_id: \"unknown\""
+        return ProductProblem(STOCKOUT, availability, item_id + ", style_code: " + style_code)
+    # 3. check the reviews
+    average_rating = _group0(re.search('itemprop="ratingValue"[^>]*>([0-9]*\.[0-9]+|[0-9]+)<', page.text)) or '5.0'
+    average_rating = float(average_rating)
+    if (0 == average_rating):
+        average_rating = 5.0
+    review_count = _group0(re.search('itemprop="reviewCount"[^>]*>(\d+)<', page.text)) or '0'
+    review_count = int(review_count)
+    return _is_it_a_review_problem(review_count, average_rating)
+_problem_finders["saksfifthavenue"] = saks_problem_finder
+    
+
 
 '''
 utilities
@@ -628,6 +818,18 @@ def _find_script_containing(text, substring):
         if "<script" not in block:
             continue
         script = ">".join((block.split("<script")[-1].split(">")[1:]))
+        script = script.strip()
+        if expression.search(script):
+            return script
+    return None
+
+
+def _find_div_containing(text, substring):
+    expression = re.compile(substring)
+    for block in text.split("</div"):
+        if "<div" not in block:
+            continue
+        script = ">".join((block.split("<div")[-1].split(">")[1:]))
         script = script.strip()
         if expression.search(script):
             return script
