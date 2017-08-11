@@ -11,7 +11,7 @@ import re
 FIELD_UTC_TIME = 'utc_time'
 FIELD_LOCAL_TIME = 'local_time'
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
-AVAILABILITY_FIELDS = [FIELD_UTC_TIME,FIELD_LOCAL_TIME,pc.FIELD_RETAILER,pc.FIELD_LINK,pc.FIELD_BRAND,pc.FIELD_FAMILY,'problem_class','problem','problem_detail']
+AVAILABILITY_FIELDS = [FIELD_UTC_TIME,FIELD_LOCAL_TIME,pc.FIELD_RETAILER,pc.FIELD_LINK,pc.FIELD_BRAND,pc.FIELD_FAMILY,'problem_class','problem','problem_detail','item_id']
 
 # how does a product listing appear on the web?
 class ListingAppearance:

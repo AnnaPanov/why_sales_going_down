@@ -34,15 +34,16 @@ def macys_problem_finder(url, config):
     # 1. load the product page
     page = _load_product_page(url, config)
     # 2. search for typical problems
+    item_id = _try_find_webid(url) or "web id not found"
     if ("product is currently unavailable" in page.text):
         logging.info('page says "product is currently unavailable"')
-        return ProductProblem(STOCKOUT, "product is currently unavailable")
+        return ProductProblem(STOCKOUT, "product is currently unavailable", item_id)
     if (re.search("availabilityMsg.*order: usually ships within", page.text)):
-        logging.info('page says "availabilityMsg.*order: usually ships within"')
-        return ProductProblem(STOCKOUT, "product not immediately available ('backorder: usually ships within blah blah')")
+        logging.info('page says "availabilityMsg.*order: usually ships within"', item_id)
+        return ProductProblem(STOCKOUT, "product not immediately available ('backorder: usually ships within blah blah')", item_id)
     if ("lmost sold out" in page.text):
         logging.info('page says "lmost sold out"')
-        return ProductProblem(ALMOST_STOCKOUT, "almost sold out")
+        return ProductProblem(ALMOST_STOCKOUT, "almost sold out", item_id)
     # 3. examine the availability and review information inside of SEO droplet
     seo_droplet = re.search('<script[^>]*json[^>]*>([^<]+"@type"\s*:\s*"Offer"[^<]+)</', page.text)
     if not seo_droplet:
@@ -104,11 +105,10 @@ def sephora_problem_finder(url, config):
     # 1. load the product page
     page = _load_product_page(url, config)
     # 2. find the SEO droplet for a given SKU ID
-    sku = re.search('skuId=(\d+)', url)
+    sku = _group0(re.search('[?&;]skuId=(\d+)', url))
     if not sku:
         logging.info('url does not contain "skuId=(\d+)"')
         return ProductProblem(CONFIG_ERROR, 'link must contain "skuId=", try clicking on a product size to expand the link')
-    sku = sku.groups()[0]
     seo_droplet = re.search('<script[^>]*json[^>]*>([^<]+"@type"\s*:\s*"Offer"[^<]+)</', page.text)
     if not seo_droplet:
         logging.info('page text does not contain a SEO droplet')
@@ -126,7 +126,7 @@ def sephora_problem_finder(url, config):
                 sku_found = True
                 break # found this SKU and its availability is good
             stockout_type = availability.split('/')[-1]
-            return ProductProblem(STOCKOUT, stockout_type)
+            return ProductProblem(STOCKOUT, stockout_type, "sku: " + sku)
     reviews_found = re.search('(\d+)\s+reviews', page.text)
     if WE_CARE_ABOUT_REVIEW_COUNT:
         if (not reviews_found):
@@ -309,12 +309,15 @@ Ulta
 def ulta_problem_finder(url, config):
     # 1. load the product page
     page = _load_product_page(url, config)
-
+    sku = _group0(re.search('property="og:url"[^>]+[&;?]sku=(\d+)', page.text)) or\
+          _group0(re.search('>Item\s+#:\s+(\d+)<', page.text))
+    if not sku:
+        return ProductProblem(CONFIG_ERROR, "cannot find a SKU for that product")
     # 2. search for typical problems
     review_count = -1
     average_rating = -1
     if ("his product is no longer available" in page.text):
-        return ProductProblem(STOCKOUT, "product no longer available")
+        return ProductProblem(STOCKOUT, "product no longer available", "sku: " + sku)
     out_of_stock = None
     out_of_stock_found = re.search('"outOfStock"\s*:\s*"?(true|false)"?', page.text)
     if (out_of_stock_found):
@@ -642,6 +645,19 @@ def _is_it_a_review_problem(review_count, average_rating):
             return ProductProblem(FEW_REVIEWS, "only %d reviews" % review_count)
     return None
 
+def _group0(search_result):
+    if (search_result):
+        groups = search_result.groups()
+        if (0 < len(groups)):
+            return groups[0]
+
+def _try_find_upc(text):
+    result = _group0(re.search('"upc"\s*:\s*"?(\d+)', text))
+    return ("upc: " + str(result)) if result else None
+
+def _try_find_webid(url):
+    result = _group0(re.search('[?&;]ID=(\d+)', url))
+    return ("web_id: " + str(result)) if result else None
 
 class LoadFile:
     def __init__(self, filename):

@@ -1,5 +1,6 @@
 import product_availability as pa
 import product_config as pc
+import product_problems as pp
 import datetime as dt
 import urllib.parse
 
@@ -87,13 +88,16 @@ _retailer_logos = {
     "jc penney/ sephora" : 'https://vignette2.wikia.nocookie.net/monsterhigh/images/3/31/Logo_-_JCPenney.jpg/revision/latest?cb=20121012161449',
 }
 
-def listing_row(link, retailer, brand, family, title, problem_class, problem, problem_detail, date_time, addressed, reopened):
+def listing_row(link, retailer, brand, family, title, problem_class, problem, problem_detail, item_id, date_time, addressed, reopened):
     additional_css = ('' if (problem_class != '' and problem_class != 'deleted' and (not addressed)) else ' style="display:none"') # hide competitive stuff in the beginning
     if not problem: problem = ''
     if not problem_detail: problem_detail = ''
     if (not problem_class) or ('' == problem_class): problem_class = 'competitive'
     data_status = problem_class if not addressed else 'addressed'
     problem_class_nickname = _problem_class_to_nickname.get(problem_class, problem_class)
+    item_info = ""
+    if item_id and (problem_class == pp.PROBLEM_WITH_AVAILABILITY):
+        item_info = " (" + item_id + ")"
     retailer_logo_url = _retailer_logos.get(retailer.lower(), 'http://www.free-icons-download.net/images/question-mark-logo-icon-76440.png')
     result = []
     result.append('''
@@ -116,7 +120,7 @@ def listing_row(link, retailer, brand, family, title, problem_class, problem, pr
     result.append('''
 													<p class="summary">''')
     if (problem or problem_detail):
-        result.append(problem + ': ' + problem_detail)
+        result.append(problem + item_info + ': ' + problem_detail)
     else: result.append('&#x2611; looking good!')
     result.append('''</p>
 												</div>
@@ -195,14 +199,15 @@ def data_table(appearance_data, distinct_retailers, username, retailer):
         listing_title = row.get(pc.FIELD_TITLE, None)
         if not listing_title:
             listing_title = row[pc.FIELD_BRAND] + ": " + row[pc.FIELD_FAMILY]
-        result.append(listing_row(row[pc.FIELD_LINK],\
-                                  row[pc.FIELD_RETAILER],\
-                                  row[pc.FIELD_BRAND],\
-                                  row[pc.FIELD_FAMILY],\
-                                  listing_title,\
-                                  row.get('problem_class', ''),\
-                                  row.get('problem', ''),\
-                                  row.get('problem_detail', ''),\
+        result.append(listing_row(row[pc.FIELD_LINK],
+                                  row[pc.FIELD_RETAILER],
+                                  row[pc.FIELD_BRAND],
+                                  row[pc.FIELD_FAMILY],
+                                  listing_title,
+                                  row.get('problem_class', ''),
+                                  row.get('problem', ''),
+                                  row.get('problem_detail', ''),
+                                  row.get('item_id', ''),
                                   row['local_time'],
                                   row.get('addressed', None),
                                   row.get('re-opened', None)))
