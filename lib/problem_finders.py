@@ -481,6 +481,9 @@ def dillards_problem_finder(url, config):
     # 1. load the product page
     page = _load_product_page(url, config)
     # 2. find availability information and all
+    item_id = _group0(re.search("[?;&]di=(\d+)", url)) or "unknown"
+    if ("item is not currently available" in page.text):
+        return ProductProblem(STOCKOUT, "item not currently available", "item # " + item_id)
     availability_info = _find_script_containing(page.text, "@type")
     if not availability_info:
         return ProductProblem(CONFIG_ERROR, "page does not contain a product information JSON blob")
@@ -488,8 +491,8 @@ def dillards_problem_finder(url, config):
         if ('InStock' not in availability) and ('OnlineOnly' not in availability):
             availability = availability.split('/')[-1]
             if (availability == 'LimitedAvailability'):
-                return ProductProblem(ALMOST_STOCKOUT, "only a few left")
-            return ProductProblem(STOCKOUT, "for one of the SKUs availability is '" + availability + "'")
+                return ProductProblem(ALMOST_STOCKOUT, "only a few left", "item # " + item_id)
+            return ProductProblem(STOCKOUT, "for one of the SKUs availability is '" + availability + "'", "item # " + item_id)
     # 3. ok, availability is not an issue, so let's see if the reviews are a problem
     average_rating = re.search('"ratingValue"\s*:\s*"([0-9]*\.[0-9]+|[0-9]+)"', page.text)
     average_rating = float(average_rating.groups()[0]) if average_rating else 5.0
@@ -502,7 +505,7 @@ _problem_finders["dillards"] = dillards_problem_finder
 '''
 Von Maur
 '''
-def volmaur_problem_finder(url, config):
+def vonmaur_problem_finder(url, config):
     # 1. load the product page
     page = _load_product_page(url, config)
     availability_error_box = re.search('id="diverr"\s*>([^<]*)<', page.text)
@@ -522,8 +525,8 @@ def volmaur_problem_finder(url, config):
             ProductProblem(CONFIG_ERROR, "page has reviews, but does not have average rating")
         average_rating = float(average_rating.groups()[0])
     return _is_it_a_review_problem(review_count, average_rating)
-_problem_finders["vonmaur"] = volmaur_problem_finder
-_problem_finders["von maur"] = volmaur_problem_finder
+_problem_finders["vonmaur"] = vonmaur_problem_finder
+_problem_finders["von maur"] = vonmaur_problem_finder
 
 
 '''
@@ -805,7 +808,7 @@ def _load_product_page(url, config):
         logging.info("^^ title: %s" % (str(title)))
         expected_title = config[product_config.FIELD_EXPECTED_TITLE]
         brand = config[product_config.FIELD_BRAND]
-        if (expected_title not in title) and (brand not in title):
+        if (expected_title.lower() not in title.lower()) and (brand.lower() not in title.lower()):
             raise ProductProblemException(ProductProblem(PRODUCT_NOT_ON_PAGE,\
                                                          "are you sure it is the right product? page title does not contain %s='%s' (instead, the title is: %s)"\
                                                          % (product_config.FIELD_EXPECTED_TITLE, expected_title, title)))
