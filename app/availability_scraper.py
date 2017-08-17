@@ -4,6 +4,8 @@ import product_config as pc
 import product_availability as pa
 import pivot_page
 
+import time
+import random
 import datetime as dt
 import argparse
 import csv
@@ -27,6 +29,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--product_config", type=str, required=True, help="the csv config file with product listings")
+    parser.add_argument("--hours", type=float, required=False, default=8.0, help="for how many hours to run (to not overload retailer websites)")
     parser.add_argument("--limit", type=int, required=False, default=999999, help="maximum number of rows to output")
     args = parser.parse_args()
 
@@ -48,7 +51,15 @@ if __name__ == "__main__":
     with open(unfinished_name(results_file), "w") as result_stream:
         results_fields = pa.AVAILABILITY_FIELDS
         results_writer = None
+        ids = []
         for id in listings:
+            ids.append(id)
+        random.shuffle(ids)
+        for id in listings:
+            if (0 < args.hours):
+                sleep_seconds = 3600 * args.hours / len(ids)
+                logging.info("sleeping for %f seconds" % sleep_seconds)
+                time.sleep(sleep_seconds)
             logging.info("trying: %s" % id)
             product_definition = listings[id]
             result = dict(product_definition, **{ 'utc_time' : utc_now_str(), 'local_time' : local_now_str()})
