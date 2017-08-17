@@ -55,7 +55,7 @@ if __name__ == "__main__":
         for id in listings:
             ids.append(id)
         random.shuffle(ids)
-        for id in listings:
+        for id in ids:
             if (0 < args.hours):
                 sleep_seconds = 3600 * args.hours / len(ids)
                 logging.info("sleeping for %f seconds" % sleep_seconds)
