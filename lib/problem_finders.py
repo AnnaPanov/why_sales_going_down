@@ -817,10 +817,11 @@ def _load_product_page(url, config):
 
         custom_headers = { 'user-agent': 'Estee Lauder Availability Checker/0.0.1' }
         all_headers_and_proxies = [ (None, None), (custom_headers, None) ]
-        if _tor_proxies: all_headers_and_proxies = all_headers_and_proxies + [ (None, _tor_proxies), (custom_headers, _tor_proxies) ]
+        if _tor_proxies: all_headers_and_proxies = all_headers_and_proxies + [ (custom_headers, _tor_proxies), (None, _tor_proxies) ]
 
         for headers_and_proxies in all_headers_and_proxies:
             try:
+                #sys.stderr.write(requests.get("http://httpbin.org/ip", proxies=headers_and_proxies[1]).text + "\n")
                 logging.info("loading from '%s', (headers,proxies)=%s ..." % (str(url), headers_and_proxies))
                 response = requests.get(url, timeout=10, headers=headers_and_proxies[0], proxies=headers_and_proxies[1])
                 logging.info("^ status_code: %d, content_length: %d" % (response.status_code, len(response.text)))
