@@ -823,7 +823,7 @@ def _load_product_page(url, config):
             try:
                 #sys.stderr.write(requests.get("http://httpbin.org/ip", proxies=headers_and_proxies[1]).text + "\n")
                 logging.info("loading from '%s', (headers,proxies)=%s ..." % (str(url), headers_and_proxies))
-                response = requests.get(url, timeout=10, headers=headers_and_proxies[0], proxies=headers_and_proxies[1])
+                response = requests.get(url, timeout=20, headers=headers_and_proxies[0], proxies=headers_and_proxies[1])
                 logging.info("^ status_code: %d, content_length: %d" % (response.status_code, len(response.text)))
                 if (response.status_code != 403):
                     break # success
