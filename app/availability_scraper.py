@@ -72,7 +72,7 @@ if __name__ == "__main__":
             start = time.time()
             try:
                 problems = pf.find_problems(product_definition)
-                logging.info("^^^ verdict: %s" % (duration, problems.problem if problems is not None else "product available"))
+                logging.info("^^^ verdict: %s" % (problems.problem if problems is not None else "product available"))
             except:
                 logging.error("failed to load product availability for '%s': %s" % (id, str(sys.exc_info())))
                 problems = pp.ProductProblem(pp.WEBSCRAPER_ERROR, str(sys.exc_info()))
