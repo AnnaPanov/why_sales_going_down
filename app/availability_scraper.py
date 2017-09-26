@@ -31,6 +31,7 @@ if __name__ == "__main__":
     parser.add_argument("--product_config", type=str, required=True, help="the csv config file with product listings")
     parser.add_argument("--hours", type=float, required=False, default=8.0, help="for how many hours to run (to not overload retailer websites)")
     parser.add_argument("--limit", type=int, required=False, default=999999, help="maximum number of rows to output")
+    parser.add_argument("--tor_port", type=int, required=False, default=0, help="port on which to run tor (default=0, don't run)")
     args = parser.parse_args()
 
     # decide on configuration
@@ -44,6 +45,10 @@ if __name__ == "__main__":
     results_file = "availability_" + utc_now_str().replace(":", "").replace("-", "").replace(" ", "-") + ".csv"
     pivot_file = results_file + ".html"
     logging.info("results will be written into '%s' and '%s'" % (results_file, pivot_file))
+
+    # start the tor
+    if (args.tor_port != 0):
+        pf.start_tor_process(args.tor_port)
 
     # work!
     rows_written = 0
