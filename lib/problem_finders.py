@@ -387,7 +387,7 @@ def bloomingdales_problem_finder(url, config):
     #    'Accept': 'application/json',\
     #    'X-Macys-Webservice-Client-Id': 'ubmqtbg8k3kmwuszkcv2ng5z'\
     }
-    page = requests.get(url, headers=headers, timeout=10, proxies=_tor_proxies)
+    page = requests.get(url, headers=headers, timeout=10)
     if ("hoose your items" in page.text):
         return ProductProblem(CONFIG_ERROR, "this link is for a collection, but not for specific product")
     for block in page.text.split("</script"):
@@ -567,7 +567,7 @@ def jcpenney_problem_finder(url, config):
             return ProductProblem(CONFIG_ERROR, "url does not have a '/blahblah?' in it, so I cannot determine the SKU")
     sku = sku.groups()[0]
     inventory_url = "http://www.jcpenney.com/v1/product-aggregator/%s/inventory" % sku
-    inventory_response = requests.get(inventory_url, timeout=10, proxies=_tor_proxies)
+    inventory_response = requests.get(inventory_url, timeout=10)
     if (inventory_response.text.strip() == ""):
         return ProductProblem(STOCKOUT, "item cannot be added to bag")
     try:
@@ -770,7 +770,7 @@ def saks_problem_finder(url, config):
     headers = {\
         'user-agent': 'Estee Lauder Availability Checker/0.0.1',\
     }
-    page = requests.get(url, headers=headers, timeout=10, proxies=_tor_proxies)
+    page = requests.get(url, headers=headers, timeout=10)
     if page.status_code != 200:
         raise ProductProblemException(ProductProblem(PAGE_NOT_LOADED, "response code %d" % page.status_code))
     if not isinstance(page.text, str):
