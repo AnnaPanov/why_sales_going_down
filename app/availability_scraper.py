@@ -60,20 +60,23 @@ if __name__ == "__main__":
         for id in listings:
             ids.append(id)
         random.shuffle(ids)
+        duration = -1
         for id in ids:
-            if (0 < args.hours):
+            if (0 < args.hours) and (duration != -1):
                 sleep_seconds = 3600 * args.hours / len(ids)
-                logging.info("sleeping for %f seconds" % sleep_seconds)
-                time.sleep(sleep_seconds)
+                logging.info("sleeping for %g seconds, minus %g" % (sleep_seconds, duration))
+                if (sleep_seconds > duration): time.sleep(sleep_seconds - duration)
             logging.info("trying: %s" % id)
             product_definition = listings[id]
             result = dict(product_definition, **{ 'utc_time' : utc_now_str(), 'local_time' : local_now_str()})
+            start = time.time()
             try:
                 problems = pf.find_problems(product_definition)
-                logging.info("^^^ verdict: %s" % (problems.problem if problems is not None else "product available"))
+                logging.info("^^^ verdict: %s" % (duration, problems.problem if problems is not None else "product available"))
             except:
                 logging.error("failed to load product availability for '%s': %s" % (id, str(sys.exc_info())))
                 problems = pp.ProductProblem(pp.WEBSCRAPER_ERROR, str(sys.exc_info()))
+            duration = time.time() - start
             if (results_writer is None):
                 results_writer = csv.DictWriter(result_stream, fieldnames=results_fields, extrasaction='ignore', lineterminator='\n')
                 results_writer.writeheader()

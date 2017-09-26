@@ -16,6 +16,8 @@ WE_CARE_ABOUT_REVIEW_COUNT = False
 _tor_process = None
 _tor_proxies = None
 def start_tor_process(tor_port):
+    global _tor_process
+    global _tor_proxies
     def print_all_lines(line):
         sys.stderr.write(line + '\n')
     def stop_tor_process():
@@ -381,7 +383,7 @@ def bloomingdales_problem_finder(url, config):
     if not product_id:
         return ProductProblem(CONFIG_ERROR, "url does not have ID= in it (%s)" % url)
     headers = {\
-        'user-agent': 'Availability Checker/0.0.1',\
+        'user-agent': 'Estee Lauder Availability Checker/0.0.1',\
     #    'Accept': 'application/json',\
     #    'X-Macys-Webservice-Client-Id': 'ubmqtbg8k3kmwuszkcv2ng5z'\
     }
@@ -766,7 +768,7 @@ def saks_problem_finder(url, config):
     if not style_code:
         return ProductProblem(CONFIG_ERROR, "Saks product URLs must all look like \"http://m.saks.com/pd.jsp?productCode=XXXX\" (where XXXX is the \"style code\" of the product, which you can find on any Saks product page)")
     headers = {\
-        'user-agent': 'Availability Checker/0.0.1',\
+        'user-agent': 'Estee Lauder Availability Checker/0.0.1',\
     }
     page = requests.get(url, headers=headers, timeout=10, proxies=_tor_proxies)
     if page.status_code != 200:
@@ -811,10 +813,22 @@ _title_finder = re.compile("<title[^>]*>([^<]*)<", re.IGNORECASE)
 
 def _load_product_page(url, config):
     try:
-        logging.info("loading from '%s' ..." % str(url))
         if (url[0:7] == "file://"): return LoadFile(url[7:]) # mainly for tests, but who knows
-        response = requests.get(url, timeout=10, proxies=_tor_proxies)
-        logging.info("^ status_code: %d, content_length: %d" % (response.status_code, len(response.text)))
+
+        custom_headers = { 'user-agent': 'Estee Lauder Availability Checker/0.0.1' }
+        all_headers_and_proxies = [ (None, None), (custom_headers, None) ]
+        if _tor_proxies: all_headers_and_proxies = all_headers_and_proxies + [ (None, _tor_proxies), (custom_headers, _tor_proxies) ]
+
+        for headers_and_proxies in all_headers_and_proxies:
+            try:
+                logging.info("loading from '%s', (headers,proxies)=%s ..." % (str(url), headers_and_proxies))
+                response = requests.get(url, timeout=10, headers=headers_and_proxies[0], proxies=headers_and_proxies[1])
+                logging.info("^ status_code: %d, content_length: %d" % (response.status_code, len(response.text)))
+                if (response.status_code != 403):
+                    break # success
+            except requests.exceptions.ReadTimeout as e:
+                logging.info("encountered a read timeout: %s" % str(e))
+
     except:
         raise ProductProblemException(ProductProblem(PAGE_NOT_LOADED, "%s" % str(sys.exc_info())))
     if response.status_code != 200:
