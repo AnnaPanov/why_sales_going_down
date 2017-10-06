@@ -836,6 +836,7 @@ def _load_product_page(url, config):
         all_headers_and_proxies = [ (custom_headers, None), (None, None)]
         if _tor_proxies: all_headers_and_proxies = all_headers_and_proxies + [ (custom_headers, _tor_proxies), (None, _tor_proxies) ]
 
+        response = None
         for headers_and_proxies in all_headers_and_proxies:
             try:
                 #sys.stderr.write(requests.get("http://httpbin.org/ip", proxies=headers_and_proxies[1]).text + "\n")
@@ -848,6 +849,8 @@ def _load_product_page(url, config):
                 logging.info("encountered a read timeout: %s" % str(e))
             except requests.exceptions.ConnectionError as e:
                 logging.info("encountered a connection error: %s" % str(e))
+        if response is None:
+            return ProductProblemException(ProductProblem(PAGE_NOT_LOADED, "ran out of ways to load this page"))
 
     except:
         raise ProductProblemException(ProductProblem(PAGE_NOT_LOADED, "%s" % str(sys.exc_info())))
