@@ -741,6 +741,7 @@ def hudsons_bay_problem_finder(url, config):
     review_count = int(review_count)
     return _is_it_a_review_problem(review_count, average_rating)
 _problem_finders["hudson's bay"] = hudsons_bay_problem_finder
+_problem_finders["hudsons bay"] = hudsons_bay_problem_finder
 
 
 def aafes_problem_finder(url, config):
@@ -803,6 +804,22 @@ def saks_problem_finder(url, config):
     review_count = int(review_count)
     return _is_it_a_review_problem(review_count, average_rating)
 _problem_finders["saksfifthavenue"] = saks_problem_finder
+
+
+def michaelkors_problem_finder(url, config):
+    # 1. load the page
+    page = _load_product_page(url, config)
+    # 2. find the availability information with UPCs
+    availability = _group0(re.search('<meta.*property="og:availability".*content="(\w+)"', page.text))
+    if not availability:
+        return ProductProblem(CONFIG_ERROR, "cannot find availability information on page")
+    if ("InStock" in availability) and ("OnlineOnly" in availability) or ("PreOrder" in availability):
+        return ProductProblem(STOCKOUT, availability.split('/')[-1])
+    # 3. ratings and reviews
+    # such information is dynamically populated by React ;(
+    return None # availability is good, but ratings and reviews were not checked
+_problem_finders["michaelkors"] = michaelkors_problem_finder
+_problem_finders["mk com"] = michaelkors_problem_finder
     
 
 
@@ -829,6 +846,8 @@ def _load_product_page(url, config):
                     break # success
             except requests.exceptions.ReadTimeout as e:
                 logging.info("encountered a read timeout: %s" % str(e))
+            except requests.exceptions.ConnectionError as e:
+                logging.info("encountered a connection error: %s" % str(e))
 
     except:
         raise ProductProblemException(ProductProblem(PAGE_NOT_LOADED, "%s" % str(sys.exc_info())))
