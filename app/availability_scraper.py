@@ -45,6 +45,10 @@ if __name__ == "__main__":
     results_file = "availability_" + utc_now_str().replace(":", "").replace("-", "").replace(" ", "-") + ".csv"
     pivot_file = results_file + ".html"
     logging.info("results will be written into '%s' and '%s'" % (results_file, pivot_file))
+    original_ids = []
+    for id in listings:
+        original_ids.append(id)
+    random.shuffle(original_ids)
 
     # start the tor
     if (args.tor_port != 0):
@@ -56,38 +60,42 @@ if __name__ == "__main__":
     with open(unfinished_name(results_file), "w") as result_stream:
         results_fields = pa.AVAILABILITY_FIELDS
         results_writer = None
-        ids = []
-        for id in listings:
-            ids.append(id)
-        random.shuffle(ids)
+        retry_list = []
         duration = -1
-        for id in ids:
-            if (0 < args.hours) and (duration != -1):
-                sleep_seconds = 3600 * args.hours / len(ids)
-                logging.info("sleeping for %g seconds, minus %g" % (sleep_seconds, duration))
-                if (sleep_seconds > duration): time.sleep(sleep_seconds - duration)
-            logging.info("trying: %s" % id)
-            product_definition = listings[id]
-            result = dict(product_definition, **{ 'utc_time' : utc_now_str(), 'local_time' : local_now_str()})
-            start = time.time()
-            try:
-                problems = pf.find_problems(product_definition)
-                logging.info("^^^ verdict: %s" % (problems.problem if problems is not None else "product available"))
-            except:
-                logging.error("failed to load product availability for '%s': %s" % (id, str(sys.exc_info())))
-                problems = pp.ProductProblem(pp.WEBSCRAPER_ERROR, str(sys.exc_info()))
-            duration = time.time() - start
-            if (results_writer is None):
-                results_writer = csv.DictWriter(result_stream, fieldnames=results_fields, extrasaction='ignore', lineterminator='\n')
-                results_writer.writeheader()
-            result = result if problems is None else dict(result, **problems.__dict__)
-            result = { f:result.get(f, '') for f in results_fields } # only leave the fields we need + use space for blanks
-            results_writer.writerow(result)
-            rows_written = rows_written + 1
-            if (problems is not None):
-                rows_with_problems.append(result)
-            if (rows_written > args.limit):
-                break
+        for ids in (original_ids, retry_list):
+            for id in ids:
+                if (rows_written > args.limit):
+                    break
+                if (0 < args.hours) and (duration != -1):
+                    sleep_seconds = 3600 * args.hours / len(ids)
+                    logging.info("sleeping for %g seconds, minus %g" % (sleep_seconds, duration))
+                    if (sleep_seconds > duration): time.sleep(sleep_seconds - duration)
+                logging.info("trying: %s" % id)
+                product_definition = listings[id]
+                result = dict(product_definition, **{ 'utc_time' : utc_now_str(), 'local_time' : local_now_str()})
+                start = time.time()
+                try:
+                    problems = pf.find_problems(product_definition)
+                    logging.info("^^^ verdict: %s" % (problems.problem if problems is not None else "product available"))
+                except:
+                    logging.error("failed to load product availability for '%s': %s" % (id, str(sys.exc_info())))
+                    problems = pp.ProductProblem(pp.WEBSCRAPER_ERROR, str(sys.exc_info()))
+                if problems and (retry_list != ids):
+                    if (problems.problem == pp.PAGE_NOT_LOADED[0]) or (problems.problem == pp.WEBSCRAPER_ERROR[0]):
+                        logging.error("=> will retry loading this listing later again")
+                        retry_list.append(id)
+                        continue
+                duration = time.time() - start
+                if (results_writer is None):
+                    results_writer = csv.DictWriter(result_stream, fieldnames=results_fields, extrasaction='ignore', lineterminator='\n')
+                    results_writer.writeheader()
+                result = result if problems is None else dict(result, **problems.__dict__)
+                result = { f:result.get(f, '') for f in results_fields } # only leave the fields we need + use space for blanks
+                results_writer.writerow(result)
+                if (problems is not None):
+                    rows_with_problems.append(result)
+                rows_written = rows_written + 1
+
     pivot_table_text = pivot_page.generate_pivot_page("Stockout Action Items @ " + local_now_str(), rows_with_problems, ["problem","Brand","Retailer","Link"], [])
     with open(pivot_file, "w") as pivot_stream:
         pivot_stream.write(pivot_table_text)

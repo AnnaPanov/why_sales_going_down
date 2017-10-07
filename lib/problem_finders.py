@@ -852,7 +852,7 @@ def _load_product_page(url, config):
             except requests.exceptions.ConnectionError as e:
                 logging.info("encountered a connection error: %s" % str(e))
         if response is None:
-            return ProductProblemException(ProductProblem(PAGE_NOT_LOADED, "ran out of ways to load this page"))
+            raise ProductProblemException(ProductProblem(PAGE_NOT_LOADED, "ran out of ways to load this page"))
 
     except:
         raise ProductProblemException(ProductProblem(PAGE_NOT_LOADED, "%s" % str(sys.exc_info())))
