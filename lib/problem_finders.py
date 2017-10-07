@@ -822,6 +822,27 @@ _problem_finders["michaelkors"] = michaelkors_problem_finder
 _problem_finders["mk com"] = michaelkors_problem_finder
     
 
+def sdm_problem_finder(url, config):
+    # 1. load the page
+    page = _load_product_page(url, config)
+    # 2. find the availability information with UPCs
+    out_of_stock = _group0(re.search('"outofStock"\s*:([^,]+)[,\n]', page.text))
+    if not out_of_stock:
+        return ProductProblem(CONFIG_ERROR, "cannot find availability information on page")
+    if ("true" in out_of_stock):
+        sku = _group0(re.search('"productSKU"\s*:([^,]+)[,\n]', page.text))
+        if sku: sku = (sku.split('"')[1] if 1 < len(sku.split('"')) else sku)
+        else: sku = "unknown"
+        return ProductProblem(STOCKOUT, "sku: " + sku)
+    # 3. ratings and reviews
+    ratings = []
+    for match in re.finditer('<span.*itemprop="ratingValue">([0-9]*\.[0-9]+|[0-9]+)</span>', page.text):
+        ratings.append(float(match.groups()[0]))
+    average_rating = 5.0 if 0 == len(ratings) else sum(ratings) / float(len(ratings))
+    return _is_it_a_review_problem(len(ratings), average_rating)
+_problem_finders["sdm-bb"] = sdm_problem_finder
+
+
 
 '''
 utilities
