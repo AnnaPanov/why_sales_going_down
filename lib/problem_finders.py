@@ -761,6 +761,7 @@ def aafes_problem_finder(url, config):
     # 3. reviews are ignored, because they must be loaded from bazaarvoice and it's not straightforward
     return None
 _problem_finders["AAFES Shopmyexchange".lower()] = aafes_problem_finder
+_problem_finders["navyexchange".lower()] = aafes_problem_finder
 
 
 def saks_problem_finder(url, config):
