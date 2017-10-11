@@ -183,6 +183,8 @@ def bonton_problem_finder(url, config):
         # 1. load the product page
         page = _load_product_page(url, config)
         # 2. find the availability and review information
+        if ("this item is currently out of stock" in page.text):
+            return ProductProblem(STOCKOUT, 'this item is currently out of stock')
         availability = re.search('<input.*="itemAvailability" value="([^"]+)"', page.text)
         if availability is None:
             logging.info("oops... looks like the product page at '%s' has no availability information" % url)
