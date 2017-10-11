@@ -569,7 +569,13 @@ JC Penney
 def jcpenney_problem_finder(url, config):
     url = url.split('&')[0]
     # 1. load the page
-    page = _load_product_page(url, config)
+    try:
+        page = _load_product_page(url, config)
+    except:
+        logging.error("will have to try again, because failed to load a jcpenney page for '%s': %s" % (url, str(sys.exc_info())))
+        page = None # jcpenney can sometimes return garbage (e.g. wrong product)
+    if page is None:
+        page = _load_product_page(url, config)
     # 2. load availability from jcpenney API
     sku = re.search('/([^/?]+)\?', url)
     if (not sku):
