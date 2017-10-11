@@ -61,15 +61,17 @@ if __name__ == "__main__":
         results_fields = pa.AVAILABILITY_FIELDS
         results_writer = None
         retry_list = []
+        retry_again_list = []
         duration = -1
-        for ids in (original_ids, retry_list):
+        for ids in (original_ids, retry_list, retry_again_list):
             for id in ids:
                 if (rows_written > args.limit):
                     break
                 if (0 < args.hours) and (duration != -1):
-                    sleep_seconds = 3600 * args.hours / len(ids)
+                    sleep_seconds = (3000 * args.hours / len(ids)) if (ids == original_ids) else (300 * args.hours / len(ids))
                     logging.info("sleeping for %g seconds, minus %g" % (sleep_seconds, duration))
                     if (sleep_seconds > duration): time.sleep(sleep_seconds - duration)
+                # 1. try to load this listing
                 logging.info("trying: %s" % id)
                 product_definition = listings[id]
                 result = dict(product_definition, **{ 'utc_time' : utc_now_str(), 'local_time' : local_now_str()})
@@ -80,11 +82,18 @@ if __name__ == "__main__":
                 except:
                     logging.error("failed to load product availability for '%s': %s" % (id, str(sys.exc_info())))
                     problems = pp.ProductProblem(pp.WEBSCRAPER_ERROR, str(sys.exc_info()))
-                if problems and (retry_list != ids):
-                    if (problems.problem == pp.PAGE_NOT_LOADED[0]) or (problems.problem == pp.WEBSCRAPER_ERROR[0]):
+                # 2. if temporarily failing to load this listing, possibly try again later
+                if problems and ((problems.problem == pp.PAGE_NOT_LOADED[0]) or (problems.problem == pp.WEBSCRAPER_ERROR[0])):
+                    can_retry = None
+                    if ids == original_ids:
+                        can_retry = retry_list
+                    if ids == retry_list:
+                        can_retry = retry_again_list
+                    if can_retry is not None:
                         logging.error("=> will retry loading this listing later again")
-                        retry_list.append(id)
+                        can_retry.append(id)
                         continue
+                # 3. record the results in any case
                 duration = time.time() - start
                 if (results_writer is None):
                     results_writer = csv.DictWriter(result_stream, fieldnames=results_fields, extrasaction='ignore', lineterminator='\n')

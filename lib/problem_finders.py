@@ -177,10 +177,16 @@ _problem_finders["sephora ca"] = sephora_problem_finder
 Bonton
 '''
 def bonton_problem_finder(url, config):
-    # 1. load the product page
-    page = _load_product_page(url, config)
-    # 2. find the availability and review information
-    availability = re.search('<input.*="itemAvailability" value="([^"]+)"', page.text)
+    attempts = 4
+    while (0 < attempts):
+        attempts = attempts - 1
+        # 1. load the product page
+        page = _load_product_page(url, config)
+        # 2. find the availability and review information
+        availability = re.search('<input.*="itemAvailability" value="([^"]+)"', page.text)
+        if availability is None:
+            logging.info("oops... looks like the product page at '%s' has no availability information" % url)
+        else: break
     if not availability:
         return ProductProblem(PRODUCT_NOT_ON_PAGE, 'page text does not contain availability information')
     availability = availability.groups()[0]
@@ -303,13 +309,18 @@ _problem_finders["boscovs"] = boscovs_problem_finder
 Neiman
 '''
 def neiman_problem_finder(url, config):
-    # 1. load the product page
-    page = _load_product_page(url, config)
-
-    # 2. find the availability and review information
-    availability = re.search("product_inventory_status.*:.*\[([^\]]+)\]", page.text)
+    attempts = 4
+    while (attempts > 0):
+        attempts = attempts - 1
+        # 1. load the product page
+        page = _load_product_page(url, config)
+        # 2. find the availability and review information
+        availability = re.search("product_inventory_status.*:.*\[([^\]]+)\]", page.text)
+        if availability is None:
+            logging.info("oops... looks like the product page at '%s' has no availability information" % url)
+        else: break
     if not availability:
-        return ProductProblem(CONFIG_ERROR, "product availability information missing")
+        return ProductProblem(PRODUCT_NOT_ON_PAGE, 'page text does not contain availability information')
     availability = availability.groups()[0].replace('\\', '')
     try:
         availability_list = json.loads('[' + availability + ']')
@@ -607,6 +618,8 @@ def lord_and_taylor_problem_finder(url, config):
     # 2. check the availability
     if ("product__limited-inventory" in page.text):
         return ProductProblem(ALMOST_STOCKOUT, "limited inventory left")
+    if ("product__sold-out-message" in page.text):
+        return ProductProblem(STOCKOUT, "sold out")
     availability = re.search('itemprop="availability"[^>]+>([^<]+)<', page.text)
     if not availability:
         return ProductProblem(CONFIG_ERROR, "availability information not found on page")
