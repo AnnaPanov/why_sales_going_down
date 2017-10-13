@@ -38,6 +38,12 @@ class S(BaseHTTPRequestHandler):
                 S.last_time_listings_loaded = now
                 S.listing_appearance.load_latest()
                 S.listing_status.load_latest()
+            if (self.path == '/'):
+                self.send_response(200)
+                self.send_header('refresh', '0;url=https://www.theuselesswebindex.com/error/')
+                self.end_headers()
+                self.wfile.write(''.encode('utf-8'))
+                return
             parsed_path = up.urlparse(self.path)
             parsed_query = up.parse_qs(parsed_path.query)
             retailer = parsed_query.get("retailer", [None])[0]
