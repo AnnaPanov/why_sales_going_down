@@ -33,7 +33,9 @@ def generate_pivot_page(title, data_rows, rows, cols):
     for row in data_rows:
         result.append('  {')
         for field in row:
-            result.append('"%s": "%s", ' % (field, row[field].replace('"','')))
+            field_value = row[field]
+            field_value = str(field_value).replace('"','') if field_value else ""
+            result.append('"%s": "%s", ' % (field, field_value))
         result.append('},\n')
     result.append('''
             ],

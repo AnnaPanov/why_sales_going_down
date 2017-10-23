@@ -150,25 +150,40 @@ def sephora_problem_finder(url, config):
                 break # found this SKU and its availability is good
             stockout_type = availability.split('/')[-1]
             return ProductProblem(STOCKOUT, stockout_type, "sku: " + sku)
+    review_count = None
     reviews_found = re.search('(\d+)\s+reviews', page.text)
-    if WE_CARE_ABOUT_REVIEW_COUNT:
-        if (not reviews_found):
-            return ProductProblem(NO_REVIEWS, "no reviews found on page")
+    if (reviews_found):
         review_count = int(reviews_found.groups()[0])
-        if (review_count == 0):
-            return ProductProblem(NO_REVIEWS, "no reviews found on page")
+    rating = None
     rating_found = re.search('"rating":\s*([0-9]*\.[0-9]+|[0-9]+)', page.text)
     if (rating_found and reviews_found):
         rating = float(rating_found.groups()[0])
-        if (rating < 4):
-            return ProductProblem(LOW_RATING, "average rating only %.2f" % rating)
+    if (rating is not None) and (rating < 4):
+        result = ProductProblem(LOW_RATING, "average rating only %.2f" % rating)
+        result.review_count = review_count
+        result.avg_rating = rating
+        return result
     if WE_CARE_ABOUT_REVIEW_COUNT:
+        if (not reviews_found) or (review_count == 0):
+            result = ProductProblem(NO_REVIEWS, "no reviews found on page")
+            result.review_count = review_count
+            result.avg_rating = rating
+            return result
         if (review_count < 15):
-            return ProductProblem(FEW_REVIEWS, "only %d reviews found on page" % review_count)
+            result = ProductProblem(FEW_REVIEWS, "only %d reviews found on page" % review_count)
+            result.review_count = review_count
+            result.avg_rating = rating
+            return result
     # 4. if we are here, we failed to find that specific SKU on the page
     if (not sku_found):
-        return ProductProblem(CONFIG_ERROR, "SEO droplet has no availability information for this skuId")
+        result = ProductProblem(CONFIG_ERROR, "SEO droplet has no availability information for this skuId")
+        result.review_count = review_count
+        result.avg_rating = rating
+        return result        
     else:
+        result = ProductProblem(NO_PROBLEM, "")
+        result.review_count = review_count
+        result.avg_rating = rating
         return None # no problem
 _problem_finders["sephora"] = sephora_problem_finder
 _problem_finders["sephora ca"] = sephora_problem_finder

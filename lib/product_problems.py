@@ -28,7 +28,8 @@ class ProductProblem:
         self.problem_severity = text_class_severity[2]
         self.problem_detail = detail
         self.item_id = item_id or ""
-            
+        self.avg_rating = None
+        self.review_count = None
 
     def __str__(self):
         return "%s-%d : '%s'" % (self.problem_class, self.problem_severity, self.problem)
