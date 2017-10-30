@@ -1,4 +1,17 @@
 Retailer,Brand,Family,Title,UPC/ Web ID/Item #,Volume,Online Only,Limited,In Stock,Link,ExpectedTitle
+Macy's,Donna Karan,Cashmere Mist,"Donna Karan Cashmere Mist Deodorant, 1.7 oz",92782,,,,,https://www.macys.com/shop/product/donna-karan-cashmere-mist-deodorant-1.7-oz?ID=92782 ,Cashmere Mist
+Macy's,Donna Karan,Cashmere Mist,"Donna Karan Cashmere Mist Eau de Parfum, 1.7 oz",174838,,,,,https://www.macys.com/shop/product/donna-karan-cashmere-mist-eau-de-parfum-1.7-oz?ID=174838 ,Cashmere Mist
+Macy's,Donna Karan,Cashmere Mist,"Donna Karan Cashmere Mist Eau de Parfum Spray, 3.4 oz",166324,,,,,https://www.macys.com/shop/product/donna-karan-cashmere-mist-eau-de-parfum-spray-3.4-oz?ID=166324 ,Cashmere Mist
+Macy's,Michael Kors,Wonderlust,michael-kors-wonderlust-eau-de-parfum-1.7-oz,2894351,,,,,https://www.macys.com/shop/product/michael-kors-wonderlust-eau-de-parfum-1.7-oz?ID=2894351 ,Wonderlust
+Macy's,Michael Kors,Wonderlust,michael-kors-wonderlust-eau-de-parfum-spray-3.4-oz,2894349,,,,,https://www.macys.com/shop/product/michael-kors-wonderlust-eau-de-parfum-spray-3.4-oz?ID=2894349 ,Wonderlust
+Macy's,Tory Burch,Love Relentlessly,tory-burch-love-relentlessly-eau-de-parfum-spray-1.7-oz,4372250,,,,,https://www.macys.com/shop/product/tory-burch-love-relentlessly-eau-de-parfum-spray-1.7-oz?ID=4372250 ,Love Relentlessly
+Macy's,Tory Burch,Love Relentlessly,tory-burch-love-relentlessly-eau-de-parfum-spray-3.4-oz,4358279,,,,,https://www.macys.com/shop/product/tory-burch-love-relentlessly-eau-de-parfum-spray-3.4-oz?ID=4358279 ,Love Relentlessly
+Macy's,Tory Burch,Tory Burch,tory-burch-eau-de-parfum-3.4-oz,1877012,,,,,https://www.macys.com/shop/product/tory-burch-eau-de-parfum-3.4-oz?ID=1877012,Tory Burch
+Macy's,Tory Burch,Tory Burch,tory-burch-eau-de-parfum-1.7-oz,1877013,,,,,https://www.macys.com/shop/product/tory-burch-eau-de-parfum-1.7-oz?ID=1877013 ,Tory Burch
+Macy's,Michael Kors,Michael Kors,michael-kors-eau-de-parfum-spray-1.7-oz,60549,,,,N,https://www.macys.com/shop/product/michael-kors-eau-de-parfum-spray-1.7-oz?ID=60549 ,Michael Kors
+Macy's,Michael Kors,Michael Kors,michael-kors-eau-de-parfum-spray-3.4-oz,60550,,,,,https://www.macys.com/shop/product/michael-kors-eau-de-parfum-spray-3.4-oz?ID=60550 ,Michael Kors
+Macy's,Michael Kors,Michael Kors,michael-kors-midnight-shimmer-eau-de-parfum-spray-1-oz.,4585658,,,,,https://www.macys.com/shop/product/michael-kors-midnight-shimmer-eau-de-parfum-spray-1-oz.?ID=4585658 ,Michael Kors
+Macy's,Donna Karan,Liquid Cashmere ,donna-karan-liquid-cashmere-rollerball-0.3-oz,2073202,,,,N,https://www.macys.com/shop/product/donna-karan-liquid-cashmere-rollerball-0.3-oz?ID=2073202 ,Liquid Cashmere 
 Sephora,Donna Karan,Cashmere Mist,cashmere-mist-deodorant,,,,,,http://www.sephora.com/cashmere-mist-deodorant-P380541?skuId=592527,Cashmere Mist
 Sephora,Donna Karan,Cashmere Mist,cashmere-mist-eau-de-parfum 1oz,,,,,,http://www.sephora.com/cashmere-mist-eau-de-parfum-P41391?skuId=1082684,Cashmere Mist
 Sephora,Donna Karan,Cashmere Mist,cashmere-mist-eau-de-parfum 1.7oz,,,,,,http://www.sephora.com/cashmere-mist-eau-de-parfum-P41391?skuId=860940,Cashmere Mist
@@ -8,10 +21,3 @@ Sephora,Michael Kors,Wonderlust,wonderlust 1oz,,,,,,http://www.sephora.com/wonde
 Sephora,Michael Kors,Wonderlust,wonderlust 1.7oz,,,,,,http://www.sephora.com/wonderlust-P412538?skuId=1854785,Wonderlust
 Sephora,Michael Kors,Wonderlust,wonderlust 3.4oz,,,,,,http://www.sephora.com/wonderlust-P412538?skuId=1854777,Wonderlust
 Sephora,Michael Kors,Wonderlust,wonderlust 0.34oz,,,,,,http://www.sephora.com/wonderlust-P412538?skuId=1871813,Wonderlust
-Sephora,Tory Burch,Love Relentlessly,love-relentlessly 1oz,,,,,,http://www.sephora.com/love-relentlessly-P48696122?skuId=1887561,Love Relentlessly
-Sephora,Tory Burch,Love Relentlessly,love-relentlessly 1.7oz,,,,,,http://www.sephora.com/love-relentlessly-P48696122?skuId=1887553,Love Relentlessly
-Sephora,Tory Burch,Love Relentlessly,love-relentlessly 3.4oz,,,,,,http://www.sephora.com/love-relentlessly-P48696122?skuId=1887546,Love Relentlessly
-Sephora,Tory Burch,Love Relentlessly,love-relentlessly 0.2oz,,,,,,http://www.sephora.com/love-relentlessly-P48696122?skuId=1887579,Love Relentlessly
-Sephora,Tory Burch,Tory Burch,tory-burch 1oz,,,,,,http://www.sephora.com/tory-burch-P384967?skuId=1574763,Tory Burch Eau
-Sephora,Tory Burch,Tory Burch,tory-burch 1.7oz,,,,,,http://www.sephora.com/tory-burch-P384967?skuId=1574755,Tory Burch Eau
-Sephora,Tory Burch,Tory Burch,tory-burch 3.4oz,,,,,,http://www.sephora.com/tory-burch-P384967?skuId=1574748,Tory Burch Eau
