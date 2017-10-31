@@ -92,10 +92,12 @@ class WklyPlansSheet:
             if value_type == "WEEK ENDING":
                 week_ending = cell.value + ", " + str(self.year) if (cell.ctype == xlrd.XL_CELL_TEXT) else cell.value
                 continue
+            if not week_ending:
+                continue
             if index not in self.col2doortype:
                 continue
             door_type = self.col2doortype[index]
-            if (door_type not in by_door_type) and (week_ending is not None):
+            if (door_type not in by_door_type):
                 by_door_type[door_type] = {
                     "week_ending" : week_ending,
                     "retailer" : self.retailer,
