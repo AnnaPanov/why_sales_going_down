@@ -130,7 +130,7 @@ class MkpDataSheet:
 
     def flush_category2values(self, brand):
         for entry in self.category2values_buffer:
-            entry['brand'] = brand
+            entry['brand'] = brand if brand != 'others' else entry.get('product', '')
             entry['retailer'] = self.retailer
             entry['door_type'] = self.door_type
             entry['now'] = self.asof
