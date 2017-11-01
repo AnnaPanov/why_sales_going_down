@@ -2,6 +2,7 @@ import re
 import csv
 import logging
 import parsedatetime
+import datetime
 import time
 
 import xlrd
@@ -58,7 +59,7 @@ class DennisDataSheet:
                     if (success):
                         self.asof_year = parsed.tm_year
                         self.asof_month = str(parsed.tm_year) + "_" + str(parsed.tm_mon)
-                        self.asof_weeknum = str(parsed.tm_year) + "_" + time.strftime('%U', parsed)
+                        self.asof_weeknum = str(parsed.tm_year) + "_" + datetime.date(parsed.tm_year, parsed.tm_mon, parsed.tm_mday).strftime('%U')
                 except:
                     pass
                 first = False
@@ -102,10 +103,10 @@ class DennisDataSheet:
         for brand in brands:
             if self.current_retailer.upper().startswith("TOTAL"):
                 continue # the decision is to not include totals, to avoid double-counting
-            #if self.current_retailer.upper() == "ONLINE":
-            #    continue # this is another form of total
-            #if self.current_retailer.upper() == "RETAIL STORES":
-            #    continue # and this is another form of total
+            if self.current_retailer.upper() == "ONLINE":
+                continue # this is another form of total
+            if self.current_retailer.upper() == "RETAIL STORES":
+                continue # and this is another form of total
             entry = {
                 'retailer' : self.current_retailer,
                 'door_type' : door_type,
