@@ -77,8 +77,10 @@ class MkpDataSheet:
                     self.door_type = "BRICK & MORTAR"
                 if (header.upper() == "ONLINE ONLY"):
                     self.door_type = "INTERNET"
-            if header and header.startswith("week"):
-                if header.split(" ")[-1] == str(self.week_num):
+            if header:
+                if header.startswith("week") and (header.split(" ")[-1] == str(self.week_num)):
+                    last_period = header
+                elif (header == "fiscal ytd"):
                     last_period = header
                 else: last_period = None
             if last_period:
@@ -100,9 +102,11 @@ class MkpDataSheet:
         self.col2valuetype = dict()
         for index, cell in enumerate(row):
             if index not in self.col2period: continue
+            period = self.col2period[index]
             if cell.value:
                 valueheader = cell.value.strip()
                 if valueheader in ("TY", "LY", "Plan", "Rank TY", "Rank LY"):
+                    if (period == "fiscal ytd"): valueheader = valueheader + "_fytd"
                     self.col2valuetype[index] = valueheader
 
     def parse_numbers(self, row):
