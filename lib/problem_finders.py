@@ -413,12 +413,7 @@ def bloomingdales_problem_finder(url, config):
     product_id = re.search("\?ID=(\d+)", url)
     if not product_id:
         return ProductProblem(CONFIG_ERROR, "url does not have ID= in it (%s)" % url)
-    headers = {\
-        'user-agent': 'Estee Lauder Availability Checker/0.0.1',\
-    #    'Accept': 'application/json',\
-    #    'X-Macys-Webservice-Client-Id': 'ubmqtbg8k3kmwuszkcv2ng5z'\
-    }
-    page = requests.get(url, headers=headers, timeout=10)
+    page = _load_product_page(url, config)
     if ("hoose your items" in page.text):
         return ProductProblem(CONFIG_ERROR, "this link is for a collection, but not for specific product")
     for block in page.text.split("</script"):
