@@ -893,7 +893,7 @@ def _load_product_page(url, config):
         custom_headers = { 'user-agent': 'Estee Lauder Availability Checker/0.0.1' }
         all_headers_and_proxies = [ (custom_headers, None), (None, None)]
         if _tor_proxies:
-            all_headers_and_proxies = all_headers_and_proxies + [ (custom_headers, _tor_proxies), (None, _tor_proxies) ]
+            all_headers_and_proxies = [ (custom_headers, _tor_proxies), (None, _tor_proxies) ] + all_headers_and_proxies
             if ('shopmyexchange' in url): all_headers_and_proxies = reversed(all_headers_and_proxies) # special case for that website
 
         response = None
