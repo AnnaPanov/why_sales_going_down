@@ -32,6 +32,7 @@ if __name__ == "__main__":
     parser.add_argument("--hours", type=float, required=False, default=8.0, help="for how many hours to run (to not overload retailer websites)")
     parser.add_argument("--limit", type=int, required=False, default=999999, help="maximum number of rows to output")
     parser.add_argument("--tor_port", type=int, required=False, default=0, help="port on which to run tor (default=0, don't run)")
+    parser.add_argument("--socks_proxy", type=str, required=False, default=None, help="spcks proxy in the format of username:password@host:port")
     args = parser.parse_args()
 
     # decide on configuration
@@ -53,6 +54,9 @@ if __name__ == "__main__":
     # start the tor
     if (args.tor_port != 0):
         pf.start_tor_process(args.tor_port)
+    if (args.socks_proxy is not None):
+        logging.info("will be using socks proxy %s" % args.socks_proxy)
+        pf._socks_proxy = args.socks_proxy
 
     # work!
     rows_written = 0
