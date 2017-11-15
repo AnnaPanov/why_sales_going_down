@@ -787,11 +787,11 @@ def aafes_problem_finder(url, config):
     # 2. look for stockouts
     limited_availability = _group0(re.search("(only\s+[^<]+\s+items?\s+left)", page.text))
     if (limited_availability):
-        return ProductProblem(ALMOST_STOCKOUT, limited_availability, "sku: " + sku)
+        return ProductProblem(ALMOST_STOCKOUT, str(limited_availability), "sku: " + str(sku))
     if ("ut of Stock" in page.text) or ("ut of stock" in page.text):
-        return ProductProblem(STOCKOUT, "out of stock", "sku: " + sku)
+        return ProductProblem(STOCKOUT, "out of stock", "sku: " + str(sku))
     if ("encountered some technical issues" in page.text):
-        return ProductProblem(STOCKOUT, "technical issues with the product", "sku: " + sku)
+        return ProductProblem(STOCKOUT, "technical issues with the product", "sku: " + str(sku))
     # 3. reviews are ignored, because they must be loaded from bazaarvoice and it's not straightforward
     return None
 _problem_finders["AAFES Shopmyexchange".lower()] = aafes_problem_finder
