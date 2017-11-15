@@ -1,2 +1,52 @@
 Retailer,Brand,Family,Title,UPC/ Web ID/Item #,Volume,Online Only,Limited,In Stock,Link,ExpectedTitle
 AAFES Shopmyexchange,Donna Karan,Liquid Cashmere White,dkny-by-donna-karan-liquid-white-sexy-cashmere-4-pc-gift-set => should be: Donna Karan,,,,,"N, two items left",https://www.shopmyexchange.com/dkny-by-donna-karan-liquid-white-sexy-cashmere-4-pc-gift-set/8057084 ,Liquid Cashmere White
+AAFES Shopmyexchange,Donna Karan,Liquid Cashmere Black,dkny-by-donna-karan-liquid-black-sexy-cashmere-4-pc-gift-set => should be: Donna Karan,,,,,N,https://www.shopmyexchange.com/dkny-by-donna-karan-liquid-black-sexy-cashmere-4-pc-gift-set/8057083 ,Liquid Cashmere Black
+AAFES Shopmyexchange,Michael Kors,Sporty Citrus ,michael-kors-sporty-citrus-eau-de-toilette-spray,,,,,"N, one left",https://www.shopmyexchange.com/michael-kors-sporty-citrus-eau-de-toilette-spray/6349938 ,Sporty Citrus 
+AAFES Shopmyexchange,Michael Kors,Rose Radiant Gold,michael-kors-rose-radiant-gold-eau-de-parfum-rollerball,,,,,"N, only 5 left",https://www.shopmyexchange.com/michael-kors-rose-radiant-gold-eau-de-parfum-rollerball/7302674,Rose Radiant Gold
+AAFES Shopmyexchange,Michael Kors,For Men,michael-kors-for-men-deodorant-stick ,,,,,"N, one left",https://www.shopmyexchange.com/michael-kors-for-men-deodorant-stick/7302656 ,For Men
+AAFES Shopmyexchange,Tory Burch,Bel Azur,"1.7oz, 3.4oz",,,,,,https://www.shopmyexchange.com/tory-burch-bel-azur-eau-de-parfum/8587369,Bel Azur
+AAFES Shopmyexchange,Tory Burch,Bel Azur,0.2oz,,,,,,https://www.shopmyexchange.com/tory-burch-bel-azur-eau-de-parfum-rollerball-0-2-oz-/8587371,Bel Azur
+Ulta,Donna Karan,Cashmere Mist,cashmere-mist-eau-de-parfum-spray 3.4oz,,,,,,http://www.ulta.com/cashmere-mist-eau-de-parfum-spray?productId=xlsImpprod640940,Cashmere Mist
+Ulta,Donna Karan,Cashmere Mist,cashmere-mist-eau-de-toilette-spray 3.4oz,,,,,,http://www.ulta.com/cashmere-mist-eau-de-toilette-spray?productId=fs801659,Cashmere Mist
+Ulta,Donna Karan,Cashmere Mist,cashmere-mist-duo-set,,,,,,http://www.ulta.com/cashmere-mist-duo-set?productId=xlsImpprod16041745,Cashmere Mist
+Ulta,Donna Karan,Cashmere Mist,cashmere-mist-deodorant 1.7oz,,,,,,http://www.ulta.com/cashmere-mist-deodorant?productId=fs748724,Cashmere Mist Deodorant
+Ulta,DKNY,Nectar Love,nectar-love-eau-de-parfum,,,,,,http://www.ulta.com/nectar-love-eau-de-parfum?productId=xlsImpprod16311029,Nectar Love Eau
+Ulta,Aramis,Signature,aramis-eau-de-toilette-spray 2oz,,,,,,http://www.ulta.com/aramis-eau-de-toilette-spray?productId=xlsImpprod640818,Aramis
+Ulta,Aramis,Black,black-eau-de-toilette 2oz,,,,,,http://www.ulta.com/black-eau-de-toilette?productId=xlsImpprod12991001,Black
+Ulta,DKNY,Be Delicious,be-delicious-eau-de-parfum-spray 3.4oz,,,,,,http://www.ulta.com/be-delicious-eau-de-parfum-spray?productId=VP00253,Be Delicious
+Ulta,DKNY,Nectar Love,nectar-love-eau-de-parfum 3.4oz,,,,,,http://www.ulta.com/nectar-love-eau-de-parfum?productId=xlsImpprod16311029,Nectar Love
+Ulta,DKNY,Nectar Love,nectar-love-eau-de-parfum-rollerball 0.34oz,,,,,,http://www.ulta.com/nectar-love-eau-de-parfum-rollerball?productId=xlsImpprod16311031,Nectar Love
+Ulta,DKNY,Be Delicious,be-delicious-rollerball 0.34oz,,,,,,http://www.ulta.com/be-delicious-rollerball?productId=xlsImpprod10651070,Be Delicious
+Ulta,Donna Karan,Cashmere Mist,cashmere-mist-deodorant 1.7oz,,,,,,http://www.ulta.com/cashmere-mist-deodorant?productId=fs748724,Cashmere Mist
+Ulta,Donna Karan,Cashmere Mist,cashmere-mist-eau-de-parfum-spray 3.4oz,,,,,,http://www.ulta.com/cashmere-mist-eau-de-parfum-spray?productId=xlsImpprod640940,Cashmere Mist
+Ulta,Donna Karan,Cashmere Mist,cashmere-mist-eau-de-toilette-spray 3.4oz,,,,,,http://www.ulta.com/cashmere-mist-eau-de-toilette-spray?productId=fs801659,Cashmere Mist
+Ulta,Donna Karan,Cashmere Mist,cashmere-mist-rollerball 0.34oz,,,,,,http://www.ulta.com/cashmere-mist-rollerball?productId=xlsImpprod10651072,Cashmere Mist
+Ulta,Donna Karan,Cashmere Mist,cashmere-mist-travel-necessities,,,,,,http://www.ulta.com/cashmere-mist-travel-necessities?productId=xlsImpprod16391021,Cashmere Mist
+Ulta,Donna Karan,Cashmere Mist,cashmere-mist-duo-set,,,,,,http://www.ulta.com/cashmere-mist-duo-set?productId=xlsImpprod16041745,Cashmere Mist
+Ulta,DKNY,Nectar Love,"3.4oz,1.7oz,1oz",,,,,,http://www.ulta.com/nectar-love-eau-de-parfum?productId=xlsImpprod16311029#,Nectar Love
+Ulta,DKNY,Nectar Love,0.34oz,,,,,,http://www.ulta.com/nectar-love-eau-de-parfum-rollerball?productId=xlsImpprod16311031,Nectar Love
+Ulta,Michael Kors,Sexy Ruby,"3.4oz,1.7oz,1oz",,,,,,http://www.ulta.com/sexy-ruby-eau-de-parfum?productId=xlsImpprod16461065,Sexy Ruby
+Ulta,Michael Kors,Wonderlust Sensual,EDP 1oz,,,,,,http://www.ulta.com/wonderlust-sensual-essence-eau-de-parfum?productId=xlsImpprod16231013,Wonderlust Sensual
+Ulta,Michael Kors,Sexy Ruby,0.34oz,,,,,,http://www.ulta.com/sexy-ruby-eau-de-parfum-rollerball?productId=xlsImpprod16461067,Sexy Ruby
+Ulta,Michael Kors,Wonderlust,wonderlust-eau-de-parfum 3.4oz,,,,,,http://www.ulta.com/wonderlust-eau-de-parfum?productId=xlsImpprod14631123,Wonderlust Eau
+Ulta,Michael Kors,Sexy Amber,michael-kors-collection-sexy-amber-eau-de-parfum 3.4oz,,,,,,http://www.ulta.com/michael-kors-collection-sexy-amber-eau-de-parfum?productId=xlsImpprod11031022,Sexy Amber Eau
+Ulta,Michael Kors,Sexy,Sexy Duo Coffret,,,,,,http://www.ulta.com/sexy-duo-coffret?productId=xlsImpprod17081363,
+Ulta,Michael Kors,Michael for Women,Michael for Women Eau de Parfum Spray,,,,,,http://www.ulta.com/michael-women-eau-de-parfum-spray?productId=fs676514,
+Ulta,Michael Kors,House of Michael Kors,House of Michael Kors Coffret,,,,,,http://www.ulta.com/house-of-michael-kors-coffret?productId=xlsImpprod17101001,
+Ulta,Michael Kors,Signature,Signature Deluxe Mini Coffret,,,,,,http://www.ulta.com/signature-deluxe-mini-coffret?productId=xlsImpprod16521059,
+Ulta,Michael Kors,Michael Kors Collection Sexy Amber,Eau de Parfum Rollerball,,,,,,http://www.ulta.com/michael-kors-collection-sexy-amber-eau-de-parfum-rollerball?productId=xlsImpprod17101007,
+Ulta,Michael Kors,Wonderlust,Eau de Parfum Rollerball,,,,,,http://www.ulta.com/wonderlust-eau-de-parfum-rollerball?productId=xlsImpprod14631125,
+Ulta,Michael Kors,Sexy Ruby,Gift Set,,,,,,http://www.ulta.com/sexy-ruby-gift-set?productId=xlsImpprod17101003,
+Ulta,Michael Kors,Wonderlust,Gift Set,,,,,,http://www.ulta.com/wonderlust-gift-set?productId=xlsImpprod17101005,
+Ulta,Michael Kors,Michael Kors Collection Sexy Amber,Eau de Parfum & Siren Lip Luster Rollerball,,,,,,http://www.ulta.com/michael-kors-collection-sexy-amber-eau-de-parfum-siren-lip-luster-rollerball?productId=xlsImpprod11141013,
+Ulta,Michael Kors,Michael Kors Collection,Rollerball Duo,,,,,,http://www.ulta.com/michael-kors-collection-rollerball-duo?productId=xlsImpprod16041767,
+Ulta,Michael Kors,Signature,Eau de Parfum Rollerball,,,,,,http://www.ulta.com/eau-de-parfum-rollerball?productId=xlsImpprod3730233,
+Ulta,Michael Kors,Gold Collection,White Luminous Gold Eau de Parfum,,,,,,http://www.ulta.com/gold-collection-white-luminous-gold-eau-de-parfum?productId=xlsImpprod12601021,
+Ulta,Michael Kors,Sheer,Eau de Parfum,,,,,,http://www.ulta.com/sheer-eau-de-parfum?productId=xlsImpprod17101009,
+Ulta,Tory Burch,Love Relentlessly,love-relentlessly-eau-de-parfum,,,,,,http://www.ulta.com/love-relentlessly-eau-de-parfum?productId=xlsImpprod15301035,Tory Burch Love Relentlessly
+Ulta,Tory Burch,Signature,tory-burch-eau-de-parfum,,,,,,http://www.ulta.com/tory-burch-eau-de-parfum?productId=xlsImpprod16231017,Tory Burch Eau
+Ulta,Tory Burch,Tory Burch,Tory Burch Coffret,,,,,,http://www.ulta.com/tory-burch-coffret?productId=xlsImpprod17151197,
+Ulta,Tory Burch,Love Relentlessly,Love Relentlessly Eau de Parfum Rollerball,,,,,,http://www.ulta.com/love-relentlessly-eau-de-parfum-rollerball?productId=xlsImpprod15301033,
+Ulta,Tory Burch,Signature,Tory Burch Eau de Parfum Rollerball,,,,,,http://www.ulta.com/tory-burch-eau-de-parfum-rollerball?productId=xlsImpprod16231019,
+Ulta,Tory Burch,Signature,Tory Burch Gift Set,,,,,,http://www.ulta.com/tory-burch-gift-set?productId=xlsImpprod17151199,
+Ulta,Tory Burch,Love Relentlessly,Love Relentlessly Gift Set,,,,,,http://www.ulta.com/love-relentlessly-gift-set?productId=xlsImpprod17151201,

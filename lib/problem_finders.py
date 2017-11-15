@@ -385,12 +385,14 @@ def ulta_problem_finder(url, config):
     if (review_count_found):
         review_count = int(review_count_found.groups()[0]);
     else:
-        return ProductProblem(CONFIG_ERROR, "cannot establish how many reviews the product has")
+        review_count = 0
+        #return ProductProblem(CONFIG_ERROR, "cannot establish how many reviews the product has")
     average_rating_found = re.search('<meta[^>]*meta_rating[^>]*content="?([0-9]*\.[0-9]+|[0-9]+)"?', page.text)
     if (average_rating_found):
         average_rating = float(average_rating_found.groups()[0])
     else:
-        return ProductProblem(CONFIG_ERROR, "cannot find the average rating of the product")
+        average_rating = 5
+        #return ProductProblem(CONFIG_ERROR, "cannot find the average rating of the product")
     if WE_CARE_ABOUT_REVIEW_COUNT:
         if (review_count == 0):
             return ProductProblem(NO_REVIEWS, "no reviews")
