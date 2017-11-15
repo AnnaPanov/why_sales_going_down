@@ -892,7 +892,7 @@ def _load_product_page(url, config):
         all_headers_and_proxies = [ (custom_headers, None), (None, None)]
         if _tor_proxies:
             all_headers_and_proxies = [ (custom_headers, _tor_proxies), (None, _tor_proxies) ] + all_headers_and_proxies
-            if ('shopmyexchange' in url): all_headers_and_proxies = reversed(all_headers_and_proxies) # special case for that website
+        #    if ('shopmyexchange' in url): all_headers_and_proxies = list(reversed(all_headers_and_proxies)) # special case for that website
         if _socks_proxy:
             socks_proxies = { 'http': 'socks5://' + _socks_proxy, 'https': 'socks5://' + _socks_proxy }
             all_headers_and_proxies = [ (custom_headers, socks_proxies), (None, socks_proxies) ] + all_headers_and_proxies
