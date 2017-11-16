@@ -67,14 +67,24 @@ if __name__ == "__main__":
         retry_list = []
         retry_again_list = []
         duration = -1
+        preferred_domain = None
         for ids in (original_ids, retry_list, retry_again_list):
-            for id in ids:
+            while 0 < len(ids):
                 if (rows_written > args.limit):
                     break
-                if (0 < args.hours) and (duration != -1):
-                    sleep_seconds = (3000 * args.hours / len(ids)) if (ids == original_ids) else (300 * args.hours / len(ids))
-                    logging.info("sleeping for %g seconds, minus %g" % (sleep_seconds, duration))
-                    if (sleep_seconds > duration): time.sleep(sleep_seconds - duration)
+                # 0. pick an id using preferred_domain if necessary
+                id = None
+                if preferred_domain is not None:
+                    same_domain_ids = [id for id in ids if preferred_domain in id]
+                    if 0 < len(same_domain_ids): id = random.choice(same_domain_ids)
+                if id is None:
+                    if (0 < args.hours) and (duration != -1):
+                        sleep_seconds = (3000 * args.hours / len(original_ids)) if (ids == original_ids) else (9000 * args.hours / len(original_ids))
+                        logging.info("sleeping for %g seconds, minus %g" % (sleep_seconds, duration))
+                        if (sleep_seconds > duration): time.sleep(sleep_seconds - duration)
+                    id = random.choice(ids)
+                ids.remove(id)
+                preferred_domain = None
                 # 1. try to load this listing
                 logging.info("trying: %s" % id)
                 product_definition = listings[id]
@@ -108,6 +118,14 @@ if __name__ == "__main__":
                 if (problems is not None):
                     rows_with_problems.append(result)
                 rows_written = rows_written + 1
+                if ('macys.com' in id):
+                    logging.info("will now retry another listing with macys.com...")
+                    preferred_domain = "macys.com"
+                    continue
+                if ('jcpenney.com' in id):
+                    logging.info("will now retry another listing with jcpenney.com...")
+                    preferred_domain = "jcpenney.com"
+                    continue
 
     pivot_table_text = pivot_page.generate_pivot_page("Stockout Action Items @ " + local_now_str(), rows_with_problems, ["problem","Brand","Retailer","Link"], [])
     with open(pivot_file, "w") as pivot_stream:

@@ -61,9 +61,6 @@ def macys_problem_finder(url, config):
     page = _load_product_page(url, config)
     # 2. search for typical problems
     item_id = _try_find_webid(url) or "web id not found"
-    if ("product is currently unavailable" in page.text):
-        logging.info('page says "product is currently unavailable"')
-        return ProductProblem(STOCKOUT, "product is currently unavailable", item_id)
     if (re.search("availabilityMsg.*order: usually ships within", page.text)):
         logging.info('page says "availabilityMsg.*order: usually ships within"', item_id)
         return ProductProblem(STOCKOUT, "product not immediately available ('backorder: usually ships within blah blah')", item_id)
@@ -73,6 +70,9 @@ def macys_problem_finder(url, config):
     # 3. examine the availability and review information inside of SEO droplet
     seo_droplet = re.search('<script[^>]*json[^>]*>([^<]+"@type"\s*:\s*"Offer"[^<]+)</', page.text)
     if not seo_droplet:
+        if ("product is currently unavailable" in page.text):
+            logging.info('page says "product is currently unavailable"')
+            return ProductProblem(STOCKOUT, "product is currently unavailable", item_id)
         logging.info('page text does not contain a SEO droplet')
         return ProductProblem(PRODUCT_NOT_ON_PAGE, 'page text does not contain a SEO droplet, maybe product is not on page anymore?')
     seo_droplet = seo_droplet.groups()[0].strip().replace('\n',' ')
