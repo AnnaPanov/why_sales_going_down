@@ -605,8 +605,8 @@ def jcpenney_problem_finder(url, config):
     if (inventory_response.text.strip() == ""):
         return ProductProblem(STOCKOUT, "item cannot be added to bag")
     try:
-        inventory_response = json.loads(inventory_response.text)
-        for inventory_state in inventory_response:
+        inventory_response_json = json.loads(inventory_response.text)
+        for inventory_state in inventory_response_json:
             if ('atp' not in inventory_state):
                 return ProductProblem(CONFIG_ERROR, "one of the items doesn't have 'atp' in " + inventory_response)
             if ('id' not in inventory_state):
@@ -615,7 +615,8 @@ def jcpenney_problem_finder(url, config):
             if not available_to_purchase:
                 return ProductProblem(STOCKOUT, "UPC=%s is out of stock at %s" % (str(inventory_state['id']), inventory_url))
     except:
-        return ProductProblem(CONFIG_ERROR, "garbled inventory response from " + inventory_url)
+        logging.info("oops, got a garbled inventory response: " + inventory_response.text)
+        return ProductProblem(CONFIG_ERROR, "garbled inventory response from " + inventory_url + ": " + inventory_response.text)
     # 3. check the reviews
     review_info = _find_script_containing(page.text, '"reviewCount"\s*:\s*(\d+)')
     if not review_info:
