@@ -25,7 +25,7 @@ def unfinished_name(filename):
 def pick_id(n_attempts_by_id, preferred_domain):
     if preferred_domain is not None:
         with_this_domain = [ id for (id, n_attempts) in n_attempts_by_id.items() if (preferred_domain in id) ]
-        if 0 < with_this_domain:
+        if 0 < len(with_this_domain):
             id = random.choice(with_this_domain)
             return (id, n_attempts_by_id[id])
     highest_n_attempts = max(n_attempts for (id, n_attempts) in n_attempts_by_id.items())
