@@ -22,6 +22,17 @@ def utc_now_str():
     return dt.datetime.strftime(dt.datetime.utcnow(), pa.TIME_FORMAT)
 def unfinished_name(filename):
     return filename + ".unfinished"
+def pick_id(n_attempts_by_id, preferred_domain):
+    if preferred_domain is not None:
+        with_this_domain = [ id for (id, n_attempts) in n_attempts_by_id.items() if (preferred_domain in id) ]
+        if 0 < with_this_domain:
+            id = random.choice(with_this_domain)
+            return (id, n_attempts_by_id[id])
+    highest_n_attempts = max(n_attempts for (id, n_attempts) in n_attempts_by_id.items())
+    with_highest_n_attempts = [ id for (id, n_attempts) in n_attempts_by_id.items() if (n_attempts == highest_n_attempts) ]
+    id = random.choice(with_highest_n_attempts)
+    return (id, n_attempts_by_id[id])
+
 
 if __name__ == "__main__":
     logging.basicConfig(format='%(asctime)s: %(levelname)s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
@@ -62,6 +73,9 @@ if __name__ == "__main__":
     rows_written = 0
     rows_with_problems = []
     n_items = len(original_ids)
+    n_attempts_by_id = dict()
+    for id in original_ids:
+        n_attempts_by_id[id] = 3 # three attempts for each id
     with open(unfinished_name(results_file), "w") as result_stream:
         results_fields = pa.AVAILABILITY_FIELDS
         results_writer = None
@@ -69,22 +83,17 @@ if __name__ == "__main__":
         retry_again_list = []
         duration = -1
         preferred_domain = None
-        for ids in (original_ids, retry_list, retry_again_list):
-            while 0 < len(ids):
+        while 0 < len(n_attempts_by_id):
                 if (rows_written > args.limit):
                     break
                 # 0. pick an id using preferred_domain if necessary
-                id = None
-                if preferred_domain is not None:
-                    same_domain_ids = [id for id in ids if preferred_domain in id]
-                    if 0 < len(same_domain_ids): id = random.choice(same_domain_ids)
-                if id is None:
+                (id, attempts_left) = pick_id(n_attempts_by_id, preferred_domain)
+                if (preferred_domain is None) or (preferred_domain not in id):
                     if (0 < args.hours) and (duration != -1):
-                        sleep_seconds = (3000 * args.hours / (1.0 + n_items)) if (ids == original_ids) else (9000 * args.hours / (1.0 + n_items))
+                        sleep_seconds = (3000 * args.hours / (1.0 + n_items)) if (ttl > 1) else (9000 * args.hours / (1.0 + n_items))
                         logging.info("sleeping for %g seconds, minus %g" % (sleep_seconds, duration))
                         if (sleep_seconds > duration): time.sleep(sleep_seconds - duration)
-                    id = random.choice(ids)
-                ids.remove(id)
+                n_attempts_by_id.pop(id, None)
                 preferred_domain = None
                 # 1. try to load this listing
                 logging.info("trying: %s" % id)
@@ -98,16 +107,10 @@ if __name__ == "__main__":
                     logging.error("failed to load product availability for '%s': %s" % (id, str(sys.exc_info())))
                     problems = pp.ProductProblem(pp.WEBSCRAPER_ERROR, str(sys.exc_info()))
                 # 2. if temporarily failing to load this listing, possibly try again later
-                if problems and ((problems.problem == pp.PAGE_NOT_LOADED[0]) or (problems.problem == pp.WEBSCRAPER_ERROR[0])):
-                    can_retry = None
-                    if ids == original_ids:
-                        can_retry = retry_list
-                    if ids == retry_list:
-                        can_retry = retry_again_list
-                    if can_retry is not None:
-                        logging.error("=> will retry loading this listing later again")
-                        can_retry.append(id)
-                        continue
+                if (0 < attempts_left) and (problems and ((problems.problem == pp.PAGE_NOT_LOADED[0]) or (problems.problem == pp.WEBSCRAPER_ERROR[0]))):
+                    logging.error("=> will retry loading this listing later again (%d attempts left)" % attempts_left)
+                    n_attempts_by_id[id] = attempts_left
+                    continue
                 # 3. record the results in any case
                 duration = time.time() - start
                 if (results_writer is None):
