@@ -901,12 +901,19 @@ def _load_product_page(url, config):
         #    if ('shopmyexchange' in url): all_headers_and_proxies = list(reversed(all_headers_and_proxies)) # special case for that website
 
         response = None
+        title = None
         for headers_and_proxies in all_headers_and_proxies:
             try:
                 #sys.stderr.write(requests.get("http://httpbin.org/ip", proxies=headers_and_proxies[1]).text + "\n")
                 logging.info("loading from '%s', (headers,proxies)=%s ..." % (str(url), headers_and_proxies))
                 response = requests.get(url, timeout=40, headers=headers_and_proxies[0], proxies=headers_and_proxies[1])
                 logging.info("^ status_code: %d, content_length: %d" % (response.status_code, len(response.text)))
+                if (response.status_code == 200):
+                    title = _title_finder.search(response.text)
+                    if title and 0 < len(title.groups()):
+                        if ("access denied" in title.groups[0].lower()):
+                            logging.info("oops, page title is: " + str(title.groups[0]))
+                            continue
                 if (response.status_code != 403):
                     break # success
             except requests.exceptions.ReadTimeout as e:
@@ -922,7 +929,6 @@ def _load_product_page(url, config):
         raise ProductProblemException(ProductProblem(PAGE_NOT_LOADED, "response code %d" % response.status_code))
     if not isinstance(response.text, str):
         raise ProductProblemException(ProductProblem(PAGE_NOT_LOADED, "response text is not a string"))
-    title = _title_finder.search(response.text)
     if (not title) or (0 == len(title.groups())):
         raise ProductProblemException(ProductProblem(PRODUCT_NOT_ON_PAGE, "page has no title"))
     if (0 != len(config)):
