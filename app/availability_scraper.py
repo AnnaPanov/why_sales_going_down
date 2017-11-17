@@ -107,13 +107,13 @@ if __name__ == "__main__":
                 except:
                     logging.error("failed to load product availability for '%s': %s" % (id, str(sys.exc_info())))
                     problems = pp.ProductProblem(pp.WEBSCRAPER_ERROR, str(sys.exc_info()))
+                duration = time.time() - start
                 # 2. if temporarily failing to load this listing, possibly try again later
                 if (0 < attempts_left) and (problems and ((problems.problem == pp.PAGE_NOT_LOADED[0]) or (problems.problem == pp.WEBSCRAPER_ERROR[0]))):
                     logging.error("=> will retry loading this listing later again (%d attempts left)" % attempts_left)
                     n_attempts_by_id[id] = attempts_left
                     continue
                 # 3. record the results in any case
-                duration = time.time() - start
                 if (results_writer is None):
                     results_writer = csv.DictWriter(result_stream, fieldnames=results_fields, extrasaction='ignore', lineterminator='\n')
                     results_writer.writeheader()
