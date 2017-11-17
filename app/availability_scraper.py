@@ -90,7 +90,7 @@ if __name__ == "__main__":
                 (id, attempts_left) = pick_id(n_attempts_by_id, preferred_domain)
                 if (preferred_domain is None) or (preferred_domain not in id):
                     if (0 < args.hours) and (duration != -1):
-                        sleep_seconds = (3000 * args.hours / (1.0 + n_items)) if (ttl > 1) else (9000 * args.hours / (1.0 + n_items))
+                        sleep_seconds = (3000 * args.hours / (1.0 + n_items)) if (attempts_left > 1) else (9000 * args.hours / (1.0 + n_items))
                         logging.info("sleeping for %g seconds, minus %g" % (sleep_seconds, duration))
                         if (sleep_seconds > duration): time.sleep(sleep_seconds - duration)
                 n_attempts_by_id.pop(id, None)
