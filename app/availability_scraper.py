@@ -61,6 +61,7 @@ if __name__ == "__main__":
     # work!
     rows_written = 0
     rows_with_problems = []
+    n_items = len(original_ids)
     with open(unfinished_name(results_file), "w") as result_stream:
         results_fields = pa.AVAILABILITY_FIELDS
         results_writer = None
@@ -79,7 +80,7 @@ if __name__ == "__main__":
                     if 0 < len(same_domain_ids): id = random.choice(same_domain_ids)
                 if id is None:
                     if (0 < args.hours) and (duration != -1):
-                        sleep_seconds = (3000 * args.hours / len(original_ids)) if (ids == original_ids) else (9000 * args.hours / len(original_ids))
+                        sleep_seconds = (3000 * args.hours / (1.0 + n_items)) if (ids == original_ids) else (9000 * args.hours / (1.0 + n_items))
                         logging.info("sleeping for %g seconds, minus %g" % (sleep_seconds, duration))
                         if (sleep_seconds > duration): time.sleep(sleep_seconds - duration)
                     id = random.choice(ids)
