@@ -911,7 +911,7 @@ def _load_product_page(url, config):
                 if (response.status_code == 200):
                     title = _title_finder.search(response.text)
                     if title and 0 < len(title.groups()):
-                        if ("access denied" in title.groups[0].lower()):
+                        if ("access denied" in title.groups()[0].lower()):
                             logging.info("oops, page title is: " + str(title.groups[0]))
                             continue
                 if (response.status_code != 403):
