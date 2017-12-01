@@ -906,7 +906,8 @@ def _load_product_page(url, config):
             try:
                 #sys.stderr.write(requests.get("http://httpbin.org/ip", proxies=headers_and_proxies[1]).text + "\n")
                 logging.info("loading from '%s', (headers,proxies)=%s ..." % (str(url), headers_and_proxies))
-                response = requests.get(url, timeout=40, headers=headers_and_proxies[0], proxies=headers_and_proxies[1])
+                timeout_value = 15 if (headers_and_proxies and 1 < len(headers_and_proxies) and headers_and_proxies[1] == _tor_proxies) else 40
+                response = requests.get(url, timeout=timeout_value, headers=headers_and_proxies[0], proxies=headers_and_proxies[1])
                 logging.info("^ status_code: %d, content_length: %d" % (response.status_code, len(response.text)))
                 if (response.status_code == 200):
                     title = _title_finder.search(response.text)
