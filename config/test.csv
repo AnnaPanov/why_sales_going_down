@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 Retailer,Brand,Family,Title,UPC/ Web ID/Item #,Link,ExpectedTitle
 JC Penney/ Sephora,Donna Karan,Cashmere Mist,donna-karan-cashmere-mist-rollerball ,,http://www.jcpenney.com/p/donna-karan-cashmere-mist-rollerball/pp5005220502?pTmplType=sephora&catId=cat1005860016&deptId=dept20024920026&urlState=/g/dkny-view-all-brands/N-1b1vba2Dgmv2k0Z5u6Z5wjZ1z12z7fZ1z0o08o&productGridView=large ,Cashmere Mist
 JC Penney/ Sephora,Tory Burch,Signature,tory-burch-rollerball ,,http://www.jcpenney.com/p/tory-burch-rollerball/ppr5007250415?pTmplType=sephora&catId=cat1005860016&deptId=dept20024920026&urlState=/g/dkny-view-all-brands/N-1b1vba2Dgmv2k0Z5u6Z5wjZ1z12z7fZ1z0o08o&productGridView=large ,Tory Burch
@@ -36,7 +35,3 @@ JC Penney/ Sephora,Tory Burch,Jolie Fleur Lavande,tory-burch-tory-burch-jolie-fl
 JC Penney/ Sephora,Tory Burch,Signature,tory-burch-creme-de-florale-body-crème ,,http://www.jcpenney.com/p/tory-burch-creme-de-florale-body-creme/ppr5007250451?pTmplType=sephora&catId=cat1005860016&deptId=dept20024920026&urlState=/g/dkny-view-all-brands/N-1b1vba2Dgmv2k0Z5u6Z5wjZ1z12z7fZ1z0o08o&UsrSeg=403t3i&productGridView=large ,Tory Burch
 JC Penney/ Sephora,Tory Burch,Jolie Fleur Rose,tory-burch-jolie-fleur-rose ,,http://www.jcpenney.com/p/tory-burch-jolie-fleur-rose/ppr5007251206?pTmplType=sephora&catId=cat1005860016&deptId=dept20024920026&urlState=/g/dkny-view-all-brands/N-1b1vba2Dgmv2k0Z5u6Z5wjZ1z12z7fZ1z0o08o&UsrSeg=403t3i&productGridView=large ,Jolie Fleur Rose
 JC Penney/ Sephora,Tory Burch,Jolie Fleur ,tory-burch-jolie-fleur-mini-travel-spray-set ,,http://www.jcpenney.com/p/tory-burch-jolie-fleur-mini-travel-spray-set/ppr5007250243?pTmplType=sephora&catId=cat1005860016&deptId=dept20024920026&urlState=/g/dkny-view-all-brands/N-1b1vba2Dgmv2k0Z5u6Z5wjZ1z12z7fZ1z0o08o&UsrSeg=403t3i&productGridView=large ,Jolie Fleur 
-=======
-Retailer,Brand,Family,Title,UPC/ Web ID/Item #,Volume,Online Only,Limited,In Stock,Link,ExpectedTitle
-JC Penney/ Sephora,Michael Kors,White Luminous Gold,michael-kors-white-luminous-gold ,,,,,,http://www.jcpenney.com/p/michael-kors-white-luminous-gold/pp5006320657?pTmplType=sephora&catId=cat1005860016&deptId=dept20024920026&urlState=/g/dkny-view-all-brands/N-1b1vba2Dgmv2k0Z5u6Z5wjZ1z12z7fZ1z0o08o&UsrSeg=403t3i&productGridView=large ,White Luminous Gold
->>>>>>> 4950288a1e4b36160cd53644c584d81077671a07
