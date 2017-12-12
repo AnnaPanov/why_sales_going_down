@@ -601,7 +601,7 @@ def jcpenney_problem_finder(url, config):
             return ProductProblem(CONFIG_ERROR, "url does not have a '/blahblah?' in it, so I cannot determine the SKU")
     sku = sku.groups()[0]
     inventory_url = "http://www.jcpenney.com/v1/product-aggregator/%s/inventory" % sku
-    inventory_response = requests.get(inventory_url, timeout=10)
+    inventory_response = _load_product_page(inventory_url, None)
     if (inventory_response.text.strip() == ""):
         return ProductProblem(STOCKOUT, "item cannot be added to bag")
     try:
@@ -616,7 +616,7 @@ def jcpenney_problem_finder(url, config):
                 return ProductProblem(STOCKOUT, "UPC=%s is out of stock at %s" % (str(inventory_state['id']), inventory_url))
     except:
         logging.info("oops, got a garbled inventory response: " + inventory_response.text)
-        return ProductProblem(CONFIG_ERROR, "garbled inventory response from " + inventory_url + ": " + inventory_response.text)
+        return ProductProblem(PAGE_NOT_LOADED, "garbled inventory response from " + inventory_url + ": " + inventory_response.text)
     # 3. check the reviews
     review_info = _find_script_containing(page.text, '"reviewCount"\s*:\s*(\d+)')
     if not review_info:
@@ -930,9 +930,9 @@ def _load_product_page(url, config):
         raise ProductProblemException(ProductProblem(PAGE_NOT_LOADED, "response code %d" % response.status_code))
     if not isinstance(response.text, str):
         raise ProductProblemException(ProductProblem(PAGE_NOT_LOADED, "response text is not a string"))
-    if (not title) or (0 == len(title.groups())):
-        raise ProductProblemException(ProductProblem(PRODUCT_NOT_ON_PAGE, "page has no title"))
-    if (0 != len(config)):
+    if (config is not None) and (0 != len(config)):
+        if (not title) or (0 == len(title.groups())):
+            raise ProductProblemException(ProductProblem(PRODUCT_NOT_ON_PAGE, "page has no title"))
         title = ' '.join(title.groups()[0].splitlines()).strip()
         logging.info("^^ title: %s" % (str(title)))
         expected_title = config[product_config.FIELD_EXPECTED_TITLE]
