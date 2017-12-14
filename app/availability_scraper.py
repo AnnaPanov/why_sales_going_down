@@ -83,6 +83,7 @@ if __name__ == "__main__":
         retry_again_list = []
         duration = -1
         preferred_domain = None
+        total_attempts_made = 0
         while 0 < len(n_attempts_by_id):
                 if (rows_written > args.limit):
                     break
@@ -94,14 +95,15 @@ if __name__ == "__main__":
                         sleep_seconds = (3000 * args.hours / (1.0 + n_items)) if (attempts_left > 1) else (9000 * args.hours / (1.0 + n_items))
                         logging.info("sleeping for %g seconds, minus %g" % (sleep_seconds, duration))
                         if (sleep_seconds > duration): time.sleep(sleep_seconds - duration)
+                logging.info("[%d listings left, %d attempts made] trying %s" % (len(n_attempts_by_id),total_attempts_made,id))
                 n_attempts_by_id.pop(id, None)
                 preferred_domain = None
                 # 1. try to load this listing
-                logging.info("trying: %s" % id)
                 product_definition = listings[id]
                 result = dict(product_definition, **{ 'utc_time' : utc_now_str(), 'local_time' : local_now_str()})
                 start = time.time()
                 try:
+                    total_attempts_made = total_attempts_made + 1
                     problems = pf.find_problems(product_definition)
                     logging.info("^^^ verdict: %s" % ((problems.problem + " (" + str(problems.problem_detail) + ")") if problems is not None else "product available"))
                 except:
@@ -110,8 +112,9 @@ if __name__ == "__main__":
                 duration = time.time() - start
                 # 2. if temporarily failing to load this listing, possibly try again later
                 if (0 < attempts_left) and (problems and ((problems.problem == pp.PAGE_NOT_LOADED[0]) or (problems.problem == pp.WEBSCRAPER_ERROR[0]))):
-                    logging.error("=> will retry loading this listing later again (%d attempts left)" % attempts_left)
                     n_attempts_by_id[id] = attempts_left
+                    logging.error("=> will retry loading this listing later again (%d attempts left)" % attempts_left)
+                    logging.info("[%d listings left, %d attempts made]" % (len(n_attempts_by_id), total_attempts_made))
                     continue
                 # 3. record the results in any case
                 if (results_writer is None):
