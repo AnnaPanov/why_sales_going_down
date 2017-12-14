@@ -915,7 +915,7 @@ def _load_product_page(url, config):
                         if ("access denied" in title.groups()[0].lower()):
                             logging.info("oops, page title is: " + str(title.groups()[0]))
                             continue
-                if (response.status_code != 403):
+                if (response.status_code != 403) and (response.status_code != 500):
                     break # success
             except requests.exceptions.ReadTimeout as e:
                 logging.info("encountered a read timeout: %s" % str(e))
