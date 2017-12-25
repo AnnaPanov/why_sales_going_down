@@ -36,13 +36,13 @@ def reviews_from_file(extractor, filename):
             yield review
 
 
-writer = csv.DictWriter(sys.stdout, fieldnames=["retailer","review"])
+writer = csv.DictWriter(sys.stdout, fieldnames=["retailer","review"], dialect="unix")
 writer.writeheader()
-for r in reviews_from_file(sephora_reviews, "../tests/sephora_reviews.txt"):
-    writer.writerow(r)
 for r in reviews_from_file(macys_reviews, "../tests/macys_reviews_part1.txt"):
     writer.writerow(r)
 for r in reviews_from_file(macys_reviews, "../tests/macys_reviews_part2.txt"):
+    writer.writerow(r)
+for r in reviews_from_file(sephora_reviews, "../tests/sephora_reviews.txt"):
     writer.writerow(r)
 for r in reviews_from_file(bloomingdales_reviews, "../tests/bloomingdales_reviews.txt"):
     writer.writerow(r)
