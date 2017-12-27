@@ -105,8 +105,8 @@ def main(underlyings):
         logging.info("got " + str(len(i)) + " instruments")
         instruments_by_und[u] = i
         instruments.extend(i)
-        logging.info("sleeping for 2s...")
-        time.sleep(2)
+        logging.info("sleeping for 4s...")
+        time.sleep(4)
     save("instruments.csv", instruments, instrument_headers)
 
     # 2. keep cycling through all underlyings to get their quotes
