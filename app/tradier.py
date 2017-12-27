@@ -35,6 +35,7 @@ def get_instruments(underlying):
             continue
         options = json.loads(response.text)['options']['option']
         for option in options:
+            option['expiration_date'] = option['expiration_date'].replace('-', '')
             definition = dict((k, option[k]) for k in instrument_headers)
             result.append(definition)
     return result
@@ -56,14 +57,24 @@ def get_quotes(underlying, instruments):
             for q in json.loads(response.text)['quotes']['quote']:
                 try:
                     t = max(q['bid_date'], q['ask_date'])
+                    if (t == 0): continue
+                except:
+                    logging.error("error in processing get_quotes('" + underlying + "'), part 1: " + str(sys.exc_info()))
+                    continue
+                try:
                     t = datetime.datetime.fromtimestamp(int(t / 1000))
                     t = t.strftime('%Y%m%dT%H%M%S')
                     q['time'] = t
+                except:
+                    logging.error("error in processing get_quotes('" + underlying + "'), part 2: " + str(sys.exc_info()))
+                    continue
+                try:                
                     q['underlying'] = underlying
                     quote = dict((k, q[k]) for k in quote_headers)
                     result.append(quote)
                 except:
-                    logging.error("error: " + str(sys.exc_info()))
+                    logging.error("error in processing get_quotes('" + underlying + "'), part 3: " + str(sys.exc_info()))
+                    continue
     return result
 
 def save(filename, instruments, headers):
@@ -94,11 +105,11 @@ def main(underlyings):
         logging.info("got " + str(len(i)) + " instruments")
         instruments_by_und[u] = i
         instruments.extend(i)
-        logging.info("sleeping for 10s...")
-        time.sleep(10)
+        logging.info("sleeping for 2s...")
+        time.sleep(2)
     save("instruments.csv", instruments, instrument_headers)
 
-    # 2. keep cycliing through all underlyings to get their quotes
+    # 2. keep cycling through all underlyings to get their quotes
     while True:
         for u in underlyings:
             start = time.time()
@@ -108,10 +119,11 @@ def main(underlyings):
             except:
                 logging.error("error: " + str(sys.exc_info()))
             finish = time.time()
-            cycle_time = 600 / len(underlyings)
+            cycle_time = 1800 / len(underlyings)
             sleep_time = cycle_time - (finish - start)
             logging.info("whole thing for " + u + " took " + str(finish - start) + " seconds: sleeping for " + str(sleep_time) + " seconds")
-            time.sleep(sleep_time)
+            if (sleep_time > 0):
+                time.sleep(sleep_time)
 
 if __name__ == "__main__":
     if (len(sys.argv) < 3):
