@@ -91,9 +91,13 @@ class MkpDataSheet:
             logging.warning("found period headers for retailer %s" % self.retailer)
             self.asof = self.eow_date(self.week_num)
             try:
+                mo = str(self.asof.month)
+                if len(mo) == 1: mo = "0" + mo
+                we = self.asof.strftime('%U')
+                if len(we) == 1: we = "0" + we
                 self.asof_year = self.asof.year
-                self.asof_month = str(self.asof.year) + "_" + str(self.asof.month)
-                self.asof_weeknum = str(self.asof.year) + "_" + self.asof.strftime('%U')
+                self.asof_month = str(self.asof.year) + "_" + mo
+                self.asof_weeknum = str(self.asof.year) + "_" + we
             except:
                 pass            
             logging.warning("for retailer %s we have a real week number %d, which means %s" % (self.retailer, self.week_num, str(self.asof)))

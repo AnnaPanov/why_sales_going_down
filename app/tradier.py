@@ -7,6 +7,7 @@ import time
 import sys
 import csv
 import os
+import re
 
 bearer = None
 instrument_headers = ('symbol', 'underlying', 'root_symbol', 'expiration_date', 'strike', 'option_type', 'open_interest')
@@ -24,7 +25,12 @@ def get_instruments(underlying):
     if (response.status_code != 200):
         logging.info("response: " + response.text)
         return []
-    expirations = json.loads(response.text)['expirations']['date']
+    expirations = json.loads(response.text).get('expirations', None)
+    if not expirations:
+        return []
+    expirations = expirations.get('date', None)
+    if not expirations:
+        return []
     for expiration in expirations:
         if (expiration > in_one_month.strftime("%Y-%m-%d")):
             continue
@@ -33,8 +39,19 @@ def get_instruments(underlying):
         if (response.status_code != 200):
             logging.info("response: " + response.text)
             continue
-        options = json.loads(response.text)['options']['option']
+        options = json.loads(response.text).get('options', None)
+        if not options:
+            continue
+        options = options.get('option', None)
+        if not options:
+            continue
         for option in options:
+            symbol = option.get('symbol', None)
+            if not symbol:
+                continue
+            root = re.search('^(\w+)\s*\d{6}[PC]', symbol)
+            if root and (root.group(1)[-1] in '123'):
+                continue # OCC symbol and its root ends with 1,2 or 3
             option['expiration_date'] = option['expiration_date'].replace('-', '')
             definition = dict((k, option[k]) for k in instrument_headers)
             result.append(definition)
@@ -44,6 +61,7 @@ def get_quotes(underlying, instruments):
     result = list()
     symbols = list()
     symbols.append(underlying)
+    max_t = None
     for option in instruments:
         symbols.append(option['symbol'])
     def chunks(l, n):
@@ -54,7 +72,13 @@ def get_quotes(underlying, instruments):
         response = requests.get(r, timeout=120, headers=http_headers())
         logging.info("status: " + str(response.status_code))
         if (response.status_code == 200):
-            for q in json.loads(response.text)['quotes']['quote']:
+            quotes = json.loads(response.text).get('quotes', None)
+            if not quotes:
+                continue
+            quotes = quotes.get('quote', None)
+            if not quotes:
+                continue
+            for q in quotes:
                 try:
                     t = max(q['bid_date'], q['ask_date'])
                     if (t == 0): continue
@@ -65,6 +89,7 @@ def get_quotes(underlying, instruments):
                     t = datetime.datetime.fromtimestamp(int(t / 1000))
                     t = t.strftime('%Y%m%dT%H%M%S')
                     q['time'] = t
+                    if (not max_t) or (t > max_t): max_t = t
                 except:
                     logging.error("error in processing get_quotes('" + underlying + "'), part 2: " + str(sys.exc_info()))
                     continue
@@ -75,6 +100,7 @@ def get_quotes(underlying, instruments):
                 except:
                     logging.error("error in processing get_quotes('" + underlying + "'), part 3: " + str(sys.exc_info()))
                     continue
+    logging.info('get_quotes("' + underlying + '"): ' + str(len(result)) + ' quotes @ t=' + str(max_t))
     return result
 
 def save(filename, instruments, headers):
