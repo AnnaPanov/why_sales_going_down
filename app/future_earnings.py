@@ -4,7 +4,8 @@ import re
 
 def get_future_earnings(d):
     today = (datetime.datetime.now() - datetime.timedelta(hours=18)).date()
-    filename = "future_earnings_" + str(d) + "_" + str(today) + ".csv"
+    today = "afterthefact" if str(today) > str(d) else str(today)
+    filename = "future_earnings_" + str(d) + "_asof_" + str(today) + ".csv"
     try:
         with open(filename, "r") as f:
             sys.stderr.write('get_future_earnings("' + str(d) + '"): file already found ' + str(filename) + '\n')
@@ -12,7 +13,7 @@ def get_future_earnings(d):
     except:
         pass
     import glob
-    delete_us = glob.glob("future_earnings_" + str(d) + "_" + str('*') + ".csv")
+    delete_us = glob.glob("future_earnings_" + str(d) + "_asof_" + str('*') + ".csv")
     if 0 < len(delete_us):
         sys.stderr.write('get_future_earnings(): deleting files ' + str(delete_us) + '\n')
         import os
@@ -40,6 +41,8 @@ def get_future_earnings(d):
             return result
     # otherwise, got no results
     sys.stderr.write('get_future_earnings("' + str(d) + '"): got NO results\n')
+    with open(filename, "w") as f:
+        f.write("")
     return None
 
 _extractor = re.compile(">([^<>]+)<")
@@ -52,11 +55,12 @@ def extract_all(cells):
 if __name__ == "__main__":
     if (len(sys.argv) != 2):
         sys.exit("usage: future_earnings.py DATE\n");
-    result = get_future_earnings(sys.argv[1])
-    if result is not None:
+    d = sys.argv[1]
+    result = get_future_earnings(d)
+    if 0 < len(result):
         rows = result.split('\n')
         headers = [extract(cell) for cell in rows[0].split("</th>")[:-1]]
         records = [extract_all(row.split("</td>")[:-1]) for row in rows[1:]]
-        sys.stdout.write(','.join(headers) + '\n')
+        sys.stdout.write('Date,' + ','.join(headers) + '\n')
         for record in records:
-            sys.stdout.write(','.join(record) + '\n')
+            sys.stdout.write(d + ',' + ','.join(record) + '\n')

@@ -9,6 +9,7 @@ import csv
 import os
 import re
 
+host = None
 bearer = None
 instrument_headers = ('symbol', 'underlying', 'root_symbol', 'expiration_date', 'strike', 'option_type', 'open_interest')
 quote_headers = ('time', 'symbol', 'underlying', 'bid', 'ask', 'bidsize', 'asksize')
@@ -20,7 +21,7 @@ def get_instruments(underlying):
     result = list()
     today = datetime.datetime.today()
     in_one_month = today + relativedelta(months=1)
-    response = requests.get('https://sandbox.tradier.com/v1/markets/options/expirations?symbol=' + underlying, timeout=30, headers=http_headers())
+    response = requests.get('https://' + host + '/v1/markets/options/expirations?symbol=' + underlying, timeout=30, headers=http_headers())
     logging.info('get_expirations("' + underlying + '"): response status ' + str(response.status_code))
     if (response.status_code != 200):
         logging.info("response: " + response.text)
@@ -34,7 +35,7 @@ def get_instruments(underlying):
     for expiration in expirations:
         if (expiration > in_one_month.strftime("%Y-%m-%d")):
             continue
-        response = requests.get('https://sandbox.tradier.com/v1/markets/options/chains?symbol=' + underlying + '&expiration=' + expiration, timeout=30, headers=http_headers())
+        response = requests.get('https://' + host + '/v1/markets/options/chains?symbol=' + underlying + '&expiration=' + expiration, timeout=30, headers=http_headers())
         logging.info('get_chains("' + underlying + '", "' + expiration + '"): response status ' + str(response.status_code))
         if (response.status_code != 200):
             logging.info("response: " + response.text)
@@ -68,7 +69,7 @@ def get_quotes(underlying, instruments):
         for i in range(0, len(l), n): yield l[i:i + n]
     for chunk in chunks(symbols, 200):
         logging.info("loading quotes for " + str(len(chunk)) + " " + underlying + " symbols...")
-        r = 'https://sandbox.tradier.com/v1/markets/quotes?symbols=' + ','.join(chunk)
+        r = 'https://' + host + '/v1/markets/quotes?symbols=' + ','.join(chunk)
         response = requests.get(r, timeout=120, headers=http_headers())
         logging.info("status: " + str(response.status_code))
         if (response.status_code == 200):
@@ -153,6 +154,10 @@ def main(underlyings):
 
 if __name__ == "__main__":
     if (len(sys.argv) < 3):
-        sys.exit("usage: tradier.py BEARER SYMBOL1 [SYMBOL2 [SYMBOL3 ...] ]\n");
-    bearer = sys.argv[1]
+        sys.exit("usage: tradier.py HOST_AND_BEARER SYMBOL1 [SYMBOL2 [SYMBOL3 ...] ]\n");
+    host_and_bearer = sys.argv[1].split(':')
+    if len(host_and_bearer) != 2:
+        sys.exit("error: HOST_AND_BEARER must have format HOST:TOKEN")
+    host = host_and_bearer[0]
+    bearer = host_and_bearer[1]
     main(sys.argv[2:])
