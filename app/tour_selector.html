@@ -1,8 +1,8 @@
 <html>
 <head>
+<script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
 <link href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
 <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
-<script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
 <!------ Include the above in your HEAD tag ---------->
 </head>
 <style>
@@ -146,17 +146,199 @@ body {
 .table-filter .media .summary {
 	font-size: 14px;
 }
+
+/* The container */
+.checkbozz {
+  display: block;
+  position: relative;
+  padding-left: 35px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  font-size: 15px;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Hide the browser's default checkbox */
+.checkbozz input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+/* Create a custom checkbox */
+.checkmark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 25px;
+  width: 25px;
+  background-color: #eee;
+}
+
+/* On mouse-over, add a grey background color */
+.checkbozz:hover input ~ .checkmark {
+  background-color: #ccc;
+}
+
+/* When the checkbox is checked, add a blue background */
+.checkbozz input:checked ~ .checkmark {
+  background-color: #2196F3;
+}
+
+/* Create the checkmark/indicator (hidden when not checked) */
+.checkmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+}
+
+/* Show the checkmark when checked */
+.checkbozz input:checked ~ .checkmark:after {
+  display: block;
+}
+
+/* Style the checkmark/indicator */
+.checkbozz .checkmark:after {
+  left: 9px;
+  top: 5px;
+  width: 5px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 3px 3px 0;
+  -webkit-transform: rotate(45deg);
+  -ms-transform: rotate(45deg);
+  transform: rotate(45deg);
+}
+
+
+/* Remove the navbar's default margin-bottom and rounded borders */ 
+.navbar {
+  margin-bottom: 0;
+  border-radius: 0;
+}
+
+/* Set height of the grid so .sidenav can be 100% (adjust as needed) */
+.row.content {height: 450px}
+
+/* Set gray background color and 100% height */
+.sidenav {
+  padding-top: 20px;
+  background-color: inherit;
+  height: 100%;
+}
+
+/* Set black background color, white text and some padding */
+footer {
+  background-color: #555;
+  color: white;
+  padding: 15px;
+}
+
+/* On small screens, set height to 'auto' for sidenav and grid */
+@media screen and (max-width: 767px) {
+  .sidenav {
+	height: auto;
+	padding: 15px;
+  }
+  .row.content {height:auto;} 
+}
+
 </style>
 
-<body>
-<div class="container">
-	<div class="row">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
+</head>
+
+
+<body>
+
+<nav class="navbar navbar-inverse">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>                        
+      </button>
+      <a class="navbar-brand" href="#">Logo</a>
+    </div>
+    <div class="collapse navbar-collapse" id="myNavbar">
+      <ul class="nav navbar-nav">
+        <li class="active"><a href="#">Home</a></li>
+        <li><a href="#">About</a></li>
+        <li><a href="#">Projects</a></li>
+        <li><a href="#">Contact</a></li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li><a href="#"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+  
+<div class="container-fluid text-left">    
+  
+ <div class="col-sm-2 sidenav">
+ 
+	<h4>nationality</h4>
+	<div class="btn-group">
+	<label class="checkbozz">
+	USA<input type="checkbox" nationality="USA"><span class="checkmark"></span>
+	</label>
+	<label class="checkbozz">
+	Belarus<input type="checkbox" nationality="Belarus"><span class="checkmark"></span>
+	</label>
+	<label class="checkbozz">
+	Spain<input type="checkbox" nationality="Spain"><span class="checkmark"></span>
+	</label>
+    </div>
+	<hr>
+	
+
+	<h4>interests</h4>
+	<div class="btn-group">	
+	<label class="checkbozz">
+	Communist History<input type="checkbox" interest="CommunistHistory"><span class="checkmark"></span>
+	</label>
+	<label class="checkbozz">
+	Cooking<input type="checkbox" interest="Cooking"><span class="checkmark"></span>
+	</label>
+	<label class="checkbozz">
+	Religion<input type="checkbox" interest="Religion"><span class="checkmark"></span>
+	</label>
+	</div>
+	<hr>
+
+	<h4>age</h4>
+	<div class="btn-group">	
+	<label class="checkbozz">
+	Young<input type="checkbox" age="Young"><span class="checkmark"></span>
+	</label>
+	<label class="checkbozz">
+	Old<input type="checkbox" age="Old"><span class="checkmark"></span>
+	</label>
+	<label class="checkbozz">
+	Female<input type="checkbox" age="Female"><span class="checkmark"></span>
+	</label>
+	</div>
+	<hr>
+
+ </div>
+
+ <div class="col-sm-8 text-left"> 
 		<section class="content">
-			<h1>Belarus Adventures</h1>
 			<div class="col-md-8 col-md-offset-2">
 				<div class="panel panel-default">
+					<div id="search_result_header"></div>
 					<div class="panel-body">
+
+					<!--
 						<div class="pull-right">
 							<div class="btn-group">
 								<button type="button" class="btn btn-success btn-filter" data-target="pagado">Foodie</button>
@@ -165,10 +347,12 @@ body {
 								<button type="button" class="btn btn-default btn-filter" data-target="all">Famous Peoples</button>
 							</div>
 						</div>
+					-->
+
 						<div class="table-container">
-							<table class="table table-filter">
+							<table class="table table-filter" id="options">
 								<tbody>
-									<tr data-status="pendiente">
+									<tr interest_Cooking="-1.0" age_Young="-2.0">
 										<td>
 											<div class="ckbox">
 												<input type="checkbox" id="checkbox3">
@@ -186,17 +370,15 @@ body {
 													<img src="http://www.traveladventures.org/countries/belarus/images/mir-castle-complex01.jpg" class="media-photo">
 												</a>
 												<div class="media-body">
-													<span class="media-meta pull-right">March 16, 2016</span>
 													<h4 class="title">
 														Lorem Impsum
-														<span class="pull-right pendiente">(Pendiente)</span>
 													</h4>
 													<p class="summary">Ut enim ad minim veniam, quis nostrud exercitation...</p>
 												</div>
 											</div>
 										</td>
 									</tr>
-									<tr data-status="cancelado">
+									<tr>
 										<td>
 											<div class="ckbox">
 												<input type="checkbox" id="checkbox2">
@@ -224,7 +406,7 @@ body {
 											</div>
 										</td>
 									</tr>
-									<tr data-status="pagado">
+									<tr>
 										<td>
 											<div class="ckbox">
 												<input type="checkbox" id="checkbox1">
@@ -252,7 +434,7 @@ body {
 											</div>
 										</td>
 									</tr>
-									<tr data-status="pagado" class="selected">
+									<tr age_Old="3.0">
 										<td>
 											<div class="ckbox">
 												<input type="checkbox" id="checkbox4" checked>
@@ -280,7 +462,7 @@ body {
 											</div>
 										</td>
 									</tr>
-									<tr data-status="pendiente">
+									<tr>
 										<td>
 											<div class="ckbox">
 												<input type="checkbox" id="checkbox5">
@@ -314,16 +496,19 @@ body {
 					</div>
 				</div>
 				<div class="content-footer">
-					<p>
-						Page © - 2016 <br>
-						Powered By <a href="https://www.facebook.com/tavo.qiqe.lucero" target="_blank">TavoQiqe</a>
-					</p>
 				</div>
 			</div>
-		</section>
-		
-	</div>
+		</section>		
+    </div>
+    <div class="col-sm-2 sidenav">
+    </div>
+  </div>
 </div>
+
+<footer class="container-fluid text-center">
+  <p>Footer Text</p>
+</footer>
+
 
 <script>
 $(document).ready(function () {
@@ -336,17 +521,60 @@ $(document).ready(function () {
       $(this).parents('tr').toggleClass('selected');
     });
 
+	/*
     $('.btn-filter').on('click', function () {
       var $target = $(this).data('target');
       if ($target != 'all') {
+	    // hide them all
         $('.table tr').css('display', 'none');
         $('.table tr[data-status="' + $target + '"]').fadeIn('slow');
       } else {
         $('.table tr').css('display', 'none').fadeIn('slow');
       }
     });
+	*/
 
- });
+	let nationalities = $('input[nationality]');
+	let interests = $('input[interest]');
+	let ages = $('input[age]');
+
+	let populatePreferences = function(category, result) {
+		let possibleValues = $('input[' + category + ']');
+		possibleValues.each(function() {
+			if ($(this).prop("checked") == true) {
+				result[category + "_" + $(this).attr(category)] = 1;
+			}
+		})
+	}
+	
+	let recommend = function() {
+		let preferences = {};
+		populatePreferences("nationality", preferences);
+		populatePreferences("interest", preferences);
+		populatePreferences("age", preferences);
+		let scores = [];
+		$('.table tr').each(function() {
+			let score = 0.0;
+			let option = $(this);
+			for (let key in preferences) {
+				let attr = option.attr(key);
+				if (attr) score += parseFloat(attr)
+			}
+			scores.push([score, option]);
+			scores.sort(function(a, b) { return b[0] - a[0]; });
+		})
+        $('.table tr').css('display', 'none');
+		for (let i = 0; i != scores.length; ++i) {
+			if (i >= 3) break;
+			const row = scores[i][1];
+			row.fadeIn('slow');
+		}
+	}
+	
+	nationalities.click(recommend);
+	interests.click(recommend);
+	ages.click(recommend);
+});
 </script>
 
 </body>
